@@ -7,6 +7,7 @@ lanrunner-linux
 *.test
 .gocache/
 dist/
+.gh-auth*.txt
 
 # ---------------------------------------------------------------------------
 # Private key material and local state. NEVER commit these.
