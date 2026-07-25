@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LAN RUNNER</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; overflow: hidden;
+    font: 13px/1.45 -apple-system, "Segoe UI", Tahoma, sans-serif;
+    background: #d4d0c8; color: #000;
+  }
+  #wrap {
+    display: grid; height: 100vh; gap: 4px; padding: 4px;
+    grid-template-columns: 250px 1fr 285px;
+    grid-template-rows: auto 1fr 250px;
+  }
+  .panel { background: #fff; border: 2px solid; border-color: #808080 #fff #fff #808080; overflow: hidden; display: flex; flex-direction: column; }
+  .bar { background: #000080; color: #fff; padding: 3px 6px; font-weight: bold; font-size: 11px; letter-spacing: .5px; display: flex; justify-content: space-between; align-items: center; flex: 0 0 auto; }
+  .mono { font-family: Consolas, "Courier New", monospace; }
+
+  header { grid-column: 1 / 4; background: #fff; border: 2px solid; border-color: #fff #808080 #808080 #fff; padding: 5px 8px; }
+  header h1 { margin: 0 0 3px; font-size: 15px; letter-spacing: 4px; }
+  header h1 span { font-weight: normal; font-size: 10px; letter-spacing: 0; color: #555; }
+  #ident { font-family: Consolas, "Courier New", monospace; font-size: 11px; color: #333; }
+  #ident b { color: #000; }
+  #ident i { font-style: normal; color: #aaa; margin: 0 5px; }
+  #nickinput { font: inherit; width: 100px; border: 1px solid #808080; }
+  #fp { cursor: help; border-bottom: 1px dotted #888; }
+
+  #peers { grid-row: 2; }
+  #peerlist { overflow-y: auto; flex: 1; padding: 3px; }
+  .peer { border-bottom: 1px dotted #ccc; padding: 4px 3px; cursor: pointer; }
+  .peer:hover { background: #eef; }
+  .peer .nick { font-weight: bold; }
+  .peer .nick .dot { color: #999; }
+  .peer.on .nick .dot { color: #0a0; }
+  .peer .meta { font-family: Consolas, monospace; font-size: 10px; color: #666; }
+  .peer.suspect { background: #fff2f2; }
+  .peer .vrf { font-size: 9px; padding: 0 3px; border: 1px solid; margin-left: 4px; }
+  .peer .vrf.yes { color: #060; border-color: #060; }
+  .peer .vrf.no { color: #a60; border-color: #a60; }
+  .flag { display: inline-block; background: #b00; color: #fff; font-size: 9px; padding: 0 3px; margin: 1px 2px 0 0; }
+  .empty { color: #777; padding: 8px 5px; font-style: italic; }
+
+  #chat { grid-row: 2; }
+  #tabs { display: flex; flex: 0 0 auto; background: #c8c4bc; border-bottom: 2px solid #808080; overflow-x: auto; }
+  .tab { padding: 4px 10px; font-size: 11px; cursor: pointer; border-right: 1px solid #999; white-space: nowrap; }
+  .tab.active { background: #fff; font-weight: bold; }
+  .tab .badge { background: #b00; color: #fff; border-radius: 7px; padding: 0 4px; font-size: 9px; margin-left: 4px; }
+  .tab .x { color: #666; margin-left: 6px; }
+  #msgs { flex: 1; overflow-y: auto; padding: 6px; }
+  .m { margin-bottom: 3px; word-wrap: break-word; }
+  .m .t { color: #aaa; font-family: Consolas, monospace; font-size: 10px; margin-right: 4px; }
+  .m .n { font-weight: bold; color: #b22; }
+  .m.self .n { color: #22b; }
+  .m .rcpt { color: #0a0; font-size: 10px; margin-left: 5px; }
+  .m.old { opacity: .65; }
+  #typing { height: 15px; font-size: 10px; color: #666; padding: 0 6px; font-style: italic; }
+  #composer { display: flex; border-top: 2px solid #808080; flex: 0 0 auto; }
+  #composer input { flex: 1; border: 0; padding: 7px; font: inherit; outline: none; }
+  #composer button { border: 2px solid; border-color: #fff #808080 #808080 #fff; background: #d4d0c8; padding: 0 16px; font: inherit; cursor: pointer; }
+  #composer button:active { border-color: #808080 #fff #fff #808080; }
+
+  #info { grid-row: 2; }
+  #infobody { overflow-y: auto; flex: 1; padding: 6px; font-size: 11px; }
+  #infobody h3 { margin: 8px 0 3px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #555; border-bottom: 1px solid #ddd; }
+  #verdict { padding: 5px; border: 1px solid; font-weight: bold; }
+  #verdict.ok { background: #eefbe8; border-color: #4a4; color: #141; }
+  #verdict.warn { background: #fff8e0; border-color: #b90; color: #530; }
+  #verdict.crit { background: #ffecec; border-color: #b00; color: #700; }
+  #verdict.pending { background: #f0f0f0; border-color: #999; color: #444; }
+  #detail { margin: 4px 0; color: #333; }
+  #fixes { margin: 3px 0 0 16px; padding: 0; color: #333; }
+  #fixes li { margin-bottom: 3px; }
+  table.kv { width: 100%; font-family: Consolas, monospace; font-size: 10.5px; border-collapse: collapse; }
+  table.kv td { padding: 1px 0; }
+  table.kv td:first-child { color: #666; }
+  table.kv td:last-child { text-align: right; }
+  .btn { border: 2px solid; border-color: #fff #808080 #808080 #fff; background: #d4d0c8; font: inherit; font-size: 11px; cursor: pointer; padding: 2px 8px; }
+  .btn:active { border-color: #808080 #fff #fff #808080; }
+
+  #console { grid-column: 1 / 4; grid-row: 3; background: #0b0b0b; }
+  #console .bar { background: #111; color: #0f0; border-bottom: 1px solid #333; font-family: Consolas, monospace; }
+  #controls { display: flex; gap: 9px; align-items: center; font-weight: normal; }
+  #controls label { cursor: pointer; user-select: none; }
+  #controls input[type=text] { background: #000; color: #0f0; border: 1px solid #444; font: inherit; padding: 1px 4px; width: 120px; }
+  #controls button { background: #222; color: #ccc; border: 1px solid #555; font: inherit; cursor: pointer; padding: 1px 6px; }
+  #out { flex: 1; overflow-y: auto; padding: 4px 6px; font-family: Consolas, "Courier New", monospace; font-size: 11.5px; line-height: 1.4; }
+  .l { white-space: pre-wrap; word-break: break-all; color: #b8b8b8; }
+  .l .ts { color: #4a6; }
+  .l .lv { display: inline-block; width: 30px; font-weight: bold; }
+  .l .sr { color: #79a; }
+  .l.SYS .lv { color: #888; }
+  .l.NET .lv { color: #5af; }
+  .l.PKT .lv { color: #dd0; }
+  .l.CRY { color: #9fd8ff; }
+  .l.CRY .lv { color: #2ce; }
+  .l.SEC { color: #ff9a9a; background: #2a0d0d; }
+  .l.SEC .lv { color: #f44; }
+  #seccount { color: #f44; }
+  .off { display: none; }
+</style>
+</head>
+<body>
+<div id="wrap">
+
+  <header>
+    <h1>LAN RUNNER <span>— local network messaging, offline, end-to-end encrypted</span></h1>
+    <div id="ident">
+      <form id="nickform" style="display:inline"><b>you:</b> <input id="nickinput" maxlength="24" autocomplete="off"></form>
+      <i>|</i> key <b id="fp" class="mono" title="Your safety number. Read it aloud to a contact to verify them.">—</b>
+      <i>|</i> host <b id="i-ip">—</b>
+      <i>|</i> tcp <b id="i-port">—</b>
+      <i>|</i> udp <b id="i-disco">—</b>
+      <i>|</i> peers <b id="i-peers">0</b>
+      <i>|</i> sessions <b id="i-sess">0</b>
+      <i>|</i> ui <b id="i-link">connecting…</b>
+    </div>
+  </header>
+
+  <section class="panel" id="peers">
+    <div class="bar"><span>Buddy List</span><span id="peercount">0</span></div>
+    <div id="peerlist"><div class="empty">listening for peers…</div></div>
+  </section>
+
+  <section class="panel" id="chat">
+    <div id="tabs"></div>
+    <div id="msgs"></div>
+    <div id="typing"></div>
+    <form id="composer">
+      <input id="input" placeholder="Type a message…" autocomplete="off" maxlength="2048">
+      <button type="submit">Send</button>
+    </form>
+  </section>
+
+  <section class="panel" id="info">
+    <div class="bar"><span>Diagnostics</span><span id="cipher">AES-256-GCM</span></div>
+    <div id="infobody">
+      <div id="verdict" class="pending">Running startup checks…</div>
+      <div id="detail"></div>
+      <ul id="fixes"></ul>
+      <h3>Counters</h3>
+      <table class="kv" id="counters"></table>
+      <h3>Selected Peer</h3>
+      <div id="selpeer" class="empty" style="padding:2px">click a buddy</div>
+    </div>
+  </section>
+
+  <section class="panel" id="console">
+    <div class="bar">
+      <span>Console &mdash; <span id="seccount">0 SEC</span></span>
+      <span id="controls">
+        <label><input type="checkbox" class="f" value="SYS" checked> SYS</label>
+        <label><input type="checkbox" class="f" value="NET" checked> NET</label>
+        <label><input type="checkbox" class="f" value="CRY" checked> CRY</label>
+        <label><input type="checkbox" class="f" value="PKT" checked> PKT</label>
+        <label><input type="checkbox" class="f" value="SEC" checked> SEC</label>
+        <input type="text" id="grep" placeholder="filter…">
+        <label><input type="checkbox" id="autoscroll" checked> follow</label>
+        <button type="button" id="clear">clear</button>
+      </span>
+    </div>
+    <div id="out"></div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var out = $('out'), msgsEl = $('msgs'), peerlist = $('peerlist'), tabsEl = $('tabs');
+  var sec = 0, me = null, peers = [], selected = null;
+
+  // conversation state: id -> {id, name, msgs:[], unread, loaded}
+  var convs = { room: { id: 'room', name: 'LAN Room', msgs: [], unread: 0, loaded: false } };
+  var active = 'room';
+
+  // ---- console -----------------------------------------------------------
+  function levelOn(lv) {
+    var b = document.querySelector('.f[value="' + lv + '"]');
+    return !b || b.checked;
+  }
+  function grepOn(s) {
+    var q = $('grep').value.trim().toLowerCase();
+    return !q || s.toLowerCase().indexOf(q) !== -1;
+  }
+  function addLog(l) {
+    var row = document.createElement('div');
+    row.className = 'l ' + l.level;
+    row.dataset.level = l.level;
+    var a = document.createElement('span'); a.className = 'ts'; a.textContent = l.ts + ' ';
+    var b = document.createElement('span'); b.className = 'lv'; b.textContent = l.level;
+    var c = document.createElement('span'); c.className = 'sr'; c.textContent = ' ' + l.src + ' ';
+    var d = document.createElement('span'); d.textContent = l.text;
+    row.appendChild(a); row.appendChild(b); row.appendChild(c); row.appendChild(d);
+    row.dataset.plain = l.ts + ' ' + l.level + ' ' + l.src + ' ' + l.text;
+    if (!levelOn(l.level) || !grepOn(row.dataset.plain)) row.classList.add('off');
+    out.appendChild(row);
+    while (out.childNodes.length > 1500) out.removeChild(out.firstChild);
+    if (l.level === 'SEC') { sec++; $('seccount').textContent = sec + ' SEC'; }
+    if ($('autoscroll').checked) out.scrollTop = out.scrollHeight;
+  }
+  function reapply() {
+    var rows = out.childNodes;
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      r.classList.toggle('off', !(levelOn(r.dataset.level) && grepOn(r.dataset.plain || '')));
+    }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.f'), function (b) { b.addEventListener('change', reapply); });
+  $('grep').addEventListener('input', reapply);
+  $('clear').addEventListener('click', function () { out.innerHTML = ''; });
+
+  // ---- tabs & messages ---------------------------------------------------
+  function convName(id) {
+    if (id === 'room') return 'LAN Room';
+    for (var i = 0; i < peers.length; i++) if (peers[i].fp === id) return peers[i].nick;
+    return id.substring(0, 8);
+  }
+  function renderTabs() {
+    tabsEl.innerHTML = '';
+    Object.keys(convs).forEach(function (id) {
+      var c = convs[id];
+      var t = document.createElement('div');
+      t.className = 'tab' + (id === active ? ' active' : '');
+      var label = document.createElement('span');
+      label.textContent = (id === 'room' ? 'LAN Room' : convName(id));
+      t.appendChild(label);
+      if (c.unread) {
+        var b = document.createElement('span'); b.className = 'badge'; b.textContent = c.unread;
+        t.appendChild(b);
+      }
+      if (id !== 'room') {
+        var x = document.createElement('span'); x.className = 'x'; x.textContent = '×';
+        x.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          delete convs[id];
+          if (active === id) active = 'room';
+          renderTabs(); renderMsgs();
+        });
+        t.appendChild(x);
+      }
+      t.addEventListener('click', function () { openConv(id); });
+      tabsEl.appendChild(t);
+    });
+  }
+  function openConv(id) {
+    if (!convs[id]) convs[id] = { id: id, name: convName(id), msgs: [], unread: 0, loaded: false };
+    active = id;
+    convs[id].unread = 0;
+    renderTabs();
+    if (!convs[id].loaded) {
+      convs[id].loaded = true;
+      fetch('/history?conv=' + encodeURIComponent(id) + '&limit=200')
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          var existing = convs[id].msgs;
+          var loaded = (j.messages || []).map(function (m) { m.old = true; return m; });
+          convs[id].msgs = loaded.concat(existing);
+          if (active === id) renderMsgs();
+        })
+        .catch(function () {});
+    }
+    renderMsgs();
+    $('input').focus();
+  }
+  function msgNode(m) {
+    var row = document.createElement('div');
+    row.className = 'm' + (m.self ? ' self' : '') + (m.old ? ' old' : '');
+    if (m.mid) row.dataset.mid = m.mid;
+    var t = document.createElement('span'); t.className = 't'; t.textContent = m.ts;
+    var n = document.createElement('span'); n.className = 'n'; n.textContent = m.nick + ':';
+    var b = document.createElement('span'); b.textContent = ' ' + m.body;
+    row.appendChild(t); row.appendChild(n); row.appendChild(b);
+    if (m.self) {
+      var r = document.createElement('span'); r.className = 'rcpt'; r.textContent = '';
+      row.appendChild(r);
+    }
+    return row;
+  }
+  function renderMsgs() {
+    msgsEl.innerHTML = '';
+    var c = convs[active];
+    if (!c) return;
+    c.msgs.forEach(function (m) { msgsEl.appendChild(msgNode(m)); });
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+  function addMsg(m) {
+    var id = m.conv || 'room';
+    if (!convs[id]) convs[id] = { id: id, name: convName(id), msgs: [], unread: 0, loaded: false };
+    convs[id].msgs.push(m);
+    if (id === active) {
+      msgsEl.appendChild(msgNode(m));
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+    } else {
+      convs[id].unread++;
+    }
+    renderTabs();
+  }
+  function markAck(a) {
+    var c = convs[a.conv];
+    if (!c) return;
+    if (a.conv === active) {
+      var row = msgsEl.querySelector('[data-mid="' + a.mid + '"] .rcpt');
+      if (row) {
+        var n = (parseInt(row.dataset.n || '0', 10) + 1);
+        row.dataset.n = n;
+        row.textContent = a.conv === 'room' ? '✓' + n : '✓';
+        row.title = 'delivered to ' + a.nick;
+      }
+    }
+  }
+
+  // ---- peers -------------------------------------------------------------
+  function renderPeers() {
+    peerlist.innerHTML = '';
+    $('i-peers').textContent = peers.length;
+    var online = peers.filter(function (p) { return p.online; }).length;
+    $('i-sess').textContent = online;
+    $('peercount').textContent = online + ' / ' + peers.length;
+    if (!peers.length) {
+      var e = document.createElement('div'); e.className = 'empty';
+      e.textContent = 'no peers detected';
+      peerlist.appendChild(e);
+      return;
+    }
+    peers.forEach(function (p) {
+      var d = document.createElement('div');
+      d.className = 'peer' + (p.online ? ' on' : '') + (p.trust === 'SUSPECT' ? ' suspect' : '');
+
+      var n = document.createElement('div'); n.className = 'nick';
+      var dot = document.createElement('span'); dot.className = 'dot'; dot.textContent = '● ';
+      n.appendChild(dot);
+      n.appendChild(document.createTextNode(p.nick));
+      var v = document.createElement('span');
+      v.className = 'vrf ' + (p.verified ? 'yes' : 'no');
+      v.textContent = p.verified ? 'verified' : 'unverified';
+      n.appendChild(v);
+      d.appendChild(n);
+
+      var m1 = document.createElement('div'); m1.className = 'meta'; m1.textContent = p.addr + '  rtt ' + p.rtt + 'ms';
+      var m2 = document.createElement('div'); m2.className = 'meta'; m2.textContent = 'key ' + p.short + '  up ' + p.age;
+      var m3 = document.createElement('div'); m3.className = 'meta'; m3.textContent = 'rx ' + p.rx + '  tx ' + p.tx + '  ' + p.bytes + 'B';
+      d.appendChild(m1); d.appendChild(m2); d.appendChild(m3);
+
+      if (p.flags && p.flags.length) {
+        var f = document.createElement('div');
+        p.flags.forEach(function (x) {
+          var s = document.createElement('span'); s.className = 'flag'; s.textContent = x; f.appendChild(s);
+        });
+        d.appendChild(f);
+      }
+      d.addEventListener('click', function () { selected = p.fp; renderSelected(); });
+      d.addEventListener('dblclick', function () { openConv(p.fp); });
+      peerlist.appendChild(d);
+    });
+    renderSelected();
+  }
+  function renderSelected() {
+    var box = $('selpeer');
+    var p = null;
+    for (var i = 0; i < peers.length; i++) if (peers[i].fp === selected) p = peers[i];
+    box.innerHTML = '';
+    if (!p) { box.className = 'empty'; box.textContent = 'click a buddy'; return; }
+    box.className = '';
+
+    var name = document.createElement('div');
+    name.innerHTML = '';
+    name.appendChild(document.createTextNode(p.nick));
+    name.style.fontWeight = 'bold';
+    box.appendChild(name);
+
+    var sn = document.createElement('div');
+    sn.className = 'mono';
+    sn.style.fontSize = '10px';
+    sn.style.margin = '3px 0';
+    sn.style.wordBreak = 'break-all';
+    sn.textContent = p.safety;
+    box.appendChild(sn);
+
+    var note = document.createElement('div');
+    note.style.color = '#555';
+    note.style.marginBottom = '4px';
+    note.textContent = p.verified
+      ? 'Safety number confirmed out of band.'
+      : 'Read this aloud to them. If it matches, mark verified.';
+    box.appendChild(note);
+
+    var btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = p.verified ? 'Un-verify' : 'Mark verified';
+    btn.addEventListener('click', function () {
+      fetch('/verify', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fp: p.fp, verified: !p.verified })
+      });
+    });
+    box.appendChild(btn);
+
+    var dm = document.createElement('button');
+    dm.className = 'btn';
+    dm.style.marginLeft = '4px';
+    dm.textContent = 'Message';
+    dm.addEventListener('click', function () { openConv(p.fp); });
+    box.appendChild(dm);
+  }
+
+  // ---- diagnostics -------------------------------------------------------
+  function renderDiag(d) {
+    var v = $('verdict');
+    v.className = d.sev;
+    v.textContent = d.verdict;
+    $('detail').textContent = d.detail || '';
+    var ul = $('fixes'); ul.innerHTML = '';
+    (d.fixes || []).forEach(function (f) {
+      var li = document.createElement('li'); li.textContent = f; ul.appendChild(li);
+    });
+    var rows = [
+      ['broadcast bound', d.broadcast ? 'yes' : 'NO'],
+      ['multicast bound', d.multicast ? 'yes' : 'no'],
+      ['announces sent', d.announces],
+      ['datagrams received', d.datagrams],
+      ['own datagrams looped', d.loopback],
+      ['inbound connections', d.inbound],
+      ['failed dials', d.dial_fail],
+      ['peers / sessions', d.peers + ' / ' + d.sessions]
+    ];
+    var t = $('counters'); t.innerHTML = '';
+    rows.forEach(function (r) {
+      var tr = document.createElement('tr');
+      var a = document.createElement('td'); a.textContent = r[0];
+      var b = document.createElement('td'); b.textContent = r[1];
+      tr.appendChild(a); tr.appendChild(b); t.appendChild(tr);
+    });
+  }
+
+  // ---- typing ------------------------------------------------------------
+  var typingTimer = null;
+  function showTyping(nick) {
+    $('typing').textContent = nick + ' is typing…';
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(function () { $('typing').textContent = ''; }, 2500);
+  }
+
+  // ---- transport ---------------------------------------------------------
+  var es = new EventSource('/events');
+  es.onopen = function () { $('i-link').textContent = 'up'; };
+  es.onerror = function () { $('i-link').textContent = 'reconnecting…'; };
+  es.onmessage = function (ev) {
+    var e;
+    try { e = JSON.parse(ev.data); } catch (_) { return; }
+    switch (e.kind) {
+      case 'log': addLog(e.data); break;
+      case 'msg': addMsg(e.data); break;
+      case 'ack': markAck(e.data); break;
+      case 'peers': peers = e.data || []; renderPeers(); renderTabs(); break;
+      case 'diag': renderDiag(e.data); break;
+      case 'typing':
+        if ((e.data.conv === 'dm' && active === e.data.fp) || (e.data.conv === 'room' && active === 'room')) {
+          showTyping(e.data.nick);
+        }
+        break;
+      case 'presence': break;
+      case 'identity':
+        me = e.data;
+        $('nickinput').value = me.nick;
+        $('fp').textContent = me.safety;
+        $('i-ip').textContent = me.ip;
+        $('i-port').textContent = me.port;
+        $('i-disco').textContent = me.disco;
+        break;
+    }
+  };
+
+  $('composer').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var v = $('input').value.trim();
+    if (!v) return;
+    $('input').value = '';
+    fetch('/send', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conv: active, body: v })
+    });
+  });
+
+  var lastTyped = 0;
+  $('input').addEventListener('input', function () {
+    var now = Date.now();
+    if (now - lastTyped < 1500) return;
+    lastTyped = now;
+    fetch('/typing', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conv: active })
+    });
+  });
+
+  $('nickform').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var v = $('nickinput').value.trim();
+    if (!v) return;
+    fetch('/nick', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nick: v })
+    });
+    $('input').focus();
+  });
+
+  renderTabs();
+  openConv('room');
+})();
+</script>
+</body>
+</html>

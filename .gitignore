@@ -1,0 +1,30 @@
+# Compiled binaries
+lanrunner
+lanrunner.exe
+lanrunner-mac
+lanrunner-linux
+*.exe
+*.test
+.gocache/
+dist/
+
+# ---------------------------------------------------------------------------
+# Private key material and local state. NEVER commit these.
+#
+# identity.json holds your Ed25519 seed and X25519 private key. Anyone with
+# that file can impersonate you on the network. known_peers.json and history/
+# leak who you talk to and what you said.
+# ---------------------------------------------------------------------------
+identity.json
+known_peers.json
+history/
+*-data/
+bob-data/
+
+# Logs
+*.log
+
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
