@@ -45,7 +45,9 @@ GOOS=linux   GOARCH=amd64 go build -o lanrunner-linux .
 Lanrunner opens <http://127.0.0.1:8080> in your default browser automatically.
 Start it on another device and the two find each other in about three seconds.
 Launching Lanrunner again opens the existing interface instead of starting a
-second background copy.
+second background copy. Use **Exit Lanrunner** in the interface to stop the
+background process and release its ports. Lanrunner also shuts itself down
+after 30 minutes without chat activity.
 
 | flag | default | meaning |
 |---|---|---|
@@ -55,6 +57,7 @@ second background copy.
 | `-peer` | — | seed a peer by address, repeatable: `-peer 192.168.1.42` |
 | `-data` | OS config dir | where keys, trust store and history live |
 | `-no-browser` | off | do not open the local web UI automatically |
+| `-idle` | `30m` | shut down after this much inactivity; `0` disables it |
 | `-no-multicast` | off | broadcast only |
 | `-v` | off | log heartbeat frames too |
 

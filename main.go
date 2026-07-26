@@ -10,6 +10,7 @@
 package main
 
 import (
+	"context"
 	"crypto/ecdh"
 	"crypto/ed25519"
 	"crypto/rand"
@@ -29,6 +30,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode"
 )
@@ -63,6 +65,7 @@ var (
 	flagSeeds     stringList
 	flagVerbose   = flag.Bool("v", false, "log every heartbeat frame too")
 	flagNoBrowser = flag.Bool("no-browser", false, "do not open the local web UI automatically")
+	flagIdle      = flag.Duration("idle", 30*time.Minute, "shut down after this much inactivity (0 disables)")
 )
 
 func openBrowser(url string) error {
@@ -232,6 +235,48 @@ type App struct {
 	ring  []LogLine
 
 	udp *net.UDPConn // send-side socket for announcements
+
+	lastActivity atomic.Int64
+	shutdownOnce sync.Once
+	shutdown     chan string
+}
+
+func (a *App) touchActivity() {
+	a.lastActivity.Store(time.Now().UnixNano())
+}
+
+func (a *App) requestShutdown(reason string) {
+	a.shutdownOnce.Do(func() {
+		a.emit("shutdown", map[string]any{"reason": reason})
+		time.AfterFunc(250*time.Millisecond, func() {
+			a.shutdown <- reason
+		})
+	})
+}
+
+func (a *App) idleLoop() {
+	timeout := *flagIdle
+	if timeout <= 0 {
+		return
+	}
+	interval := time.Minute
+	if timeout < interval {
+		interval = timeout / 4
+		if interval < 100*time.Millisecond {
+			interval = 100 * time.Millisecond
+		}
+	}
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		last := time.Unix(0, a.lastActivity.Load())
+		if time.Since(last) >= timeout {
+			a.logf("SYS", "local", "idle for %s — shutting down and releasing the UI port", timeout)
+			a.requestShutdown(fmt.Sprintf("%s of inactivity", timeout))
+			return
+		}
+	}
 }
 
 func main() {
@@ -296,7 +341,9 @@ func main() {
 		peers:     map[string]*Peer{},
 		conns:     map[string]*Conn{},
 		subs:      map[chan []byte]bool{},
+		shutdown:  make(chan string, 1),
 	}
+	app.touchActivity()
 	app.diag = NewDiag(app)
 	runtimePath := filepath.Join(dataDir, "runtime.json")
 	if content, err := json.Marshal(runtimeState{Port: *flagUI}); err == nil {
@@ -341,6 +388,7 @@ func main() {
 	go app.announceLoop()
 	go app.maintenanceLoop()
 	go app.diag.Run()
+	go app.idleLoop()
 
 	mux := http.NewServeMux()
 	app.routes(mux)
@@ -365,9 +413,17 @@ func main() {
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
-	<-stop
+	shutdownReason := "system interrupt"
+	select {
+	case <-stop:
+	case shutdownReason = <-app.shutdown:
+	}
+	signal.Stop(stop)
 
-	app.logf("SYS", "local", "shutdown — announcing departure and closing sessions")
+	app.logf("SYS", "local", "shutdown (%s) — announcing departure and closing sessions", shutdownReason)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	_ = srv.Shutdown(ctx)
+	cancel()
 	app.sendBye()
 	app.closeAllConns()
 	app.hist.Close()

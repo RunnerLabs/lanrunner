@@ -19,7 +19,7 @@
   .bar { background: #000080; color: #fff; padding: 3px 6px; font-weight: bold; font-size: 11px; letter-spacing: .5px; display: flex; justify-content: space-between; align-items: center; flex: 0 0 auto; }
   .mono { font-family: Consolas, "Courier New", monospace; }
 
-  header { grid-column: 1 / 4; background: #fff; border: 2px solid; border-color: #fff #808080 #808080 #fff; padding: 5px 8px; }
+  header { position: relative; grid-column: 1 / 4; background: #fff; border: 2px solid; border-color: #fff #808080 #808080 #fff; padding: 5px 118px 5px 8px; }
   header h1 { margin: 0 0 3px; font-size: 15px; letter-spacing: 4px; }
   header h1 span { font-weight: normal; font-size: 10px; letter-spacing: 0; color: #555; }
   #ident { font-family: Consolas, "Courier New", monospace; font-size: 11px; color: #333; }
@@ -27,6 +27,7 @@
   #ident i { font-style: normal; color: #aaa; margin: 0 5px; }
   #nickinput { font: inherit; width: 100px; border: 1px solid #808080; }
   #fp { cursor: help; border-bottom: 1px dotted #888; }
+  #exitapp { position: absolute; right: 7px; top: 7px; color: #700; }
 
   #peers { grid-row: 2; }
   #peerlist { overflow-y: auto; flex: 1; padding: 3px; }
@@ -107,6 +108,7 @@
 
   <header>
     <h1>Lanrunner <span>— local network messaging, offline, end-to-end encrypted</span></h1>
+    <button type="button" class="btn" id="exitapp" title="Stop Lanrunner and release its local ports">Exit Lanrunner</button>
     <div id="ident">
       <form id="nickform" style="display:inline"><b>you:</b> <input id="nickinput" maxlength="24" autocomplete="off"></form>
       <i>|</i> key <b id="fp" class="mono" title="Your safety number. Read it aloud to a contact to verify them.">—</b>
@@ -445,6 +447,15 @@
 
   // ---- transport ---------------------------------------------------------
   var es = new EventSource('/events');
+  function showStopped(reason) {
+    es.close();
+    document.body.innerHTML =
+      '<div style="height:100vh;display:grid;place-items:center;background:#d4d0c8">' +
+      '<div style="background:#fff;border:2px solid;border-color:#fff #808080 #808080 #fff;padding:24px;font:13px Segoe UI,Tahoma,sans-serif;text-align:center">' +
+      '<b>Lanrunner has stopped.</b><br><br>' +
+      (reason || 'The local server and ports are now closed.') +
+      '<br><br>You can close this browser tab.</div></div>';
+  }
   es.onopen = function () { $('i-link').textContent = 'up'; };
   es.onerror = function () { $('i-link').textContent = 'reconnecting…'; };
   es.onmessage = function (ev) {
@@ -462,6 +473,7 @@
         }
         break;
       case 'presence': break;
+      case 'shutdown': showStopped(e.data && e.data.reason); break;
       case 'identity':
         me = e.data;
         $('nickinput').value = me.nick;
@@ -504,6 +516,21 @@
       body: JSON.stringify({ nick: v })
     });
     $('input').focus();
+  });
+
+  $('exitapp').addEventListener('click', function () {
+    if (!window.confirm('Exit Lanrunner and close its local server?')) return;
+    var button = $('exitapp');
+    button.disabled = true;
+    button.textContent = 'Stopping...';
+    fetch('/exit', { method: 'POST' })
+      .then(function (response) {
+        if (!response.ok) throw new Error('exit request failed');
+        showStopped('The local server and ports are now closed.');
+      })
+      .catch(function () {
+        showStopped('Lanrunner stopped responding. You can close this tab.');
+      });
   });
 
   renderTabs();

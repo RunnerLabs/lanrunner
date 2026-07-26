@@ -482,6 +482,7 @@ func (c *Conn) handleFrame(pt []byte) {
 			body = string([]rune(body)[:maxBodyRunes])
 			a.logf("SEC", c.addr, "message from %s truncated at %d runes by local policy", c.nick, maxBodyRunes)
 		}
+		a.touchActivity()
 
 		conv := "room"
 		if m.Conv == "dm" {

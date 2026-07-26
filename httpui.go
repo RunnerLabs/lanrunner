@@ -26,6 +26,7 @@ func (a *App) routes(mux *http.ServeMux) {
 	mux.HandleFunc("/verify", a.handleVerify)
 	mux.HandleFunc("/history", a.handleHistory)
 	mux.HandleFunc("/diag", a.handleDiag)
+	mux.HandleFunc("/exit", a.handleExit)
 }
 
 func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +34,7 @@ func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	a.touchActivity()
 	b, err := uiFS.ReadFile("index.html")
 	if err != nil {
 		http.Error(w, "ui missing", http.StatusInternalServerError)
@@ -147,6 +149,7 @@ func (a *App) handleSend(w http.ResponseWriter, r *http.Request) {
 	if in.Conv == "" {
 		in.Conv = "room"
 	}
+	a.touchActivity()
 	a.Send(in.Conv, in.Body)
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -166,6 +169,7 @@ func (a *App) handleTyping(w http.ResponseWriter, r *http.Request) {
 	if in.Conv == "" {
 		in.Conv = "room"
 	}
+	a.touchActivity()
 	a.SendTyping(in.Conv)
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -187,6 +191,7 @@ func (a *App) handleNick(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "empty nick", http.StatusBadRequest)
 		return
 	}
+	a.touchActivity()
 	a.mu.Lock()
 	old := a.nick
 	a.nick = n
@@ -215,6 +220,7 @@ func (a *App) handleVerify(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown fingerprint", http.StatusNotFound)
 		return
 	}
+	a.touchActivity()
 	state := "unverified"
 	if in.Verified {
 		state = "verified"
@@ -225,6 +231,7 @@ func (a *App) handleVerify(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) handleHistory(w http.ResponseWriter, r *http.Request) {
+	a.touchActivity()
 	conv := r.URL.Query().Get("conv")
 	if conv == "" {
 		conv = "room"
@@ -249,6 +256,17 @@ func (a *App) handleHistory(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) handleDiag(w http.ResponseWriter, r *http.Request) {
+	a.touchActivity()
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(a.diag.Snapshot())
+}
+
+func (a *App) handleExit(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST only", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+	a.requestShutdown("user requested exit")
 }
