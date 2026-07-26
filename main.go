@@ -1,4 +1,4 @@
-// LAN RUNNER — an offline, serverless messenger for a single local network.
+// Lanrunner — an offline, serverless messenger for a single local network.
 //
 // No internet, no accounts, no central server. Devices find each other by UDP
 // broadcast and multicast, then hold long-lived TCP sessions encrypted with
@@ -31,7 +31,7 @@ import (
 
 const (
 	protoVersion  = 2
-	appName       = "LAN RUNNER"
+	appName       = "Lanrunner"
 	announceEvery = 3 * time.Second
 	peerTimeout   = 15 * time.Second
 	logRingSize   = 500

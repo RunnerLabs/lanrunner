@@ -158,7 +158,7 @@ func (d *Diag) evaluate() {
 			"No peers found yet",
 			fmt.Sprintf("Our own datagrams loop back fine (%d seen), so this machine is transmitting and receiving. Nobody else has answered.",
 				d.loopback.Load()),
-			"confirm another device is actually running Lan Runner",
+			"confirm another device is actually running Lanrunner",
 			fmt.Sprintf("confirm every device uses the same -disco port (this one: %d)", a.discoPort),
 			"if you are on guest or hotel Wi-Fi, client isolation is blocking peer traffic — nothing in the app can bypass it",
 			"across subnets or with isolation on, seed directly: -peer 192.168.1.42")

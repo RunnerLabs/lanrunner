@@ -1,4 +1,4 @@
-# Lan Runner — Quickstart (Windows)
+# Lanrunner — Quickstart (Windows)
 
 ## First, the thing that's confusing
 
@@ -66,7 +66,7 @@ Two things happen:
 2. The window prints your address and fingerprint:
 
 ```
-  LAN RUNNER ready — open http://127.0.0.1:8080
+  Lanrunner ready — open http://127.0.0.1:8080
   your fingerprint: A3F1-9C22-...
 ```
 

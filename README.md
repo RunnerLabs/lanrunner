@@ -1,4 +1,4 @@
-# LAN RUNNER
+# Lanrunner
 
 An AIM-style messenger for a single local network. No internet, no server, no
 accounts. Devices find each other by UDP broadcast and multicast, then hold
@@ -8,6 +8,8 @@ bare-bones CSS served on loopback.
 > **Early beta:** This is pre-release software. The one-screen download page
 > lives in [`site/index.html`](site/index.html); it is intentionally separate
 > from the in-app interface embedded by the Go program.
+
+Public beta page: <https://lanrunner-beta.quantum-bydesign.chatgpt.site>
 
 Zero third-party dependencies — everything is Go's standard library, so it
 builds on a machine that has never been online.
@@ -168,7 +170,7 @@ the disk. If that matters, put the data directory on an encrypted volume.
   expose past sessions. Rotating with an ephemeral-ephemeral handshake would
   fix it.
 - **Announces are unencrypted.** They have to be readable to bootstrap, so
-  anyone on the LAN can see who is running Lan Runner, their display name, and
+  anyone on the LAN can see who is running Lanrunner, their display name, and
   their public keys. They cannot read messages or impersonate anyone. Wrapping
   discovery in a shared room passphrase would hide even that.
 - **Metadata is visible.** Message sizes and timing are observable on the wire

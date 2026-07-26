@@ -4,7 +4,7 @@ package main
 
 import "syscall"
 
-// reuseControl lets several Lan Runner instances share the discovery port on
+// reuseControl lets several Lanrunner instances share the discovery port on
 // one machine, which is what makes local two-window testing possible.
 func reuseControl(network, address string, c syscall.RawConn) error {
 	var serr error

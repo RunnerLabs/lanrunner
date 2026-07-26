@@ -3,18 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Lan Runner is a private, serverless messenger for devices on the same local network.">
-  <title>Lan Runner — Private Beta</title>
+  <meta name="description" content="Lanrunner is an encrypted local-network messenger with no accounts, central server, or internet requirement.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Lanrunner — Public Beta">
+  <meta property="og:description" content="Encrypted local messaging. No accounts, no central server, and no internet required.">
+  <meta property="og:image" content="https://lanrunner-beta.quantum-bydesign.chatgpt.site/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Lanrunner — Public Beta">
+  <meta name="twitter:description" content="Encrypted local messaging. No accounts, no central server, and no internet required.">
+  <meta name="twitter:image" content="https://lanrunner-beta.quantum-bydesign.chatgpt.site/og.png">
+  <title>Lanrunner — Public Beta</title>
   <style>
     :root {
-      color-scheme: dark;
-      --ink: #f4f1e8;
-      --muted: #a9b2ad;
-      --line: #28332f;
-      --panel: rgba(15, 21, 19, .9);
-      --green: #95f5bd;
-      --green-deep: #163e28;
-      --black: #080b0a;
+      color-scheme: light;
+      --desktop: #d8d8d3;
+      --paper: #f8f8f5;
+      --panel: #eeeeea;
+      --line: #555a58;
+      --soft-line: #a8aaa6;
+      --ink: #181b1a;
+      --muted: #5e6461;
+      --navy: #173c73;
+      --green: #167342;
+      --green-soft: #dcecdf;
+      --white: #fff;
     }
 
     * {
@@ -32,321 +44,493 @@
     body {
       display: grid;
       place-items: center;
-      padding: clamp(16px, 3vw, 40px);
+      padding: 12px;
       color: var(--ink);
       background:
-        radial-gradient(circle at 20% 10%, rgba(55, 122, 81, .22), transparent 36%),
-        radial-gradient(circle at 85% 85%, rgba(42, 94, 67, .14), transparent 40%),
-        var(--black);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        linear-gradient(90deg, rgba(0, 0, 0, .025) 1px, transparent 1px),
+        linear-gradient(rgba(0, 0, 0, .025) 1px, transparent 1px),
+        var(--desktop);
+      background-size: 8px 8px;
+      font-family: Arial, Helvetica, sans-serif;
     }
 
-    body::before {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      content: "";
-      opacity: .22;
-      background-image: linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px);
-      background-size: 100% 4px;
-    }
-
-    main {
-      width: min(100%, 1080px);
-      height: min(100%, 690px);
+    .window {
+      width: min(1100px, 100%);
+      height: min(720px, calc(100dvh - 24px));
       display: grid;
-      grid-template-rows: auto 1fr auto;
-      gap: clamp(22px, 5vh, 48px);
-      padding: clamp(22px, 4.5vw, 58px);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: linear-gradient(145deg, rgba(17, 24, 21, .97), rgba(9, 13, 11, .97));
-      box-shadow: 0 30px 90px rgba(0, 0, 0, .45);
+      grid-template-rows: 32px 24px 1fr 26px;
+      border: 1px solid #252827;
+      background: var(--paper);
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, .24);
     }
 
-    header,
-    footer,
-    .eyebrow,
-    .actions {
+    .titlebar,
+    .menubar,
+    .statusbar {
       display: flex;
       align-items: center;
     }
 
-    header,
-    footer {
+    .titlebar {
       justify-content: space-between;
+      padding-left: 10px;
+      color: var(--white);
+      background: var(--navy);
+      font: 700 13px/1 "Courier New", Consolas, monospace;
     }
 
-    .brand {
-      color: var(--ink);
-      font: 700 .84rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
-      letter-spacing: .22em;
-      text-decoration: none;
-      text-transform: uppercase;
+    .titlebar-brand {
+      display: flex;
+      gap: 9px;
+      align-items: center;
     }
 
-    .status {
-      padding: 7px 10px;
-      border: 1px solid #315440;
-      border-radius: 999px;
+    .app-icon {
+      width: 15px;
+      height: 15px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--white);
+      color: var(--white);
+      font-size: 9px;
+    }
+
+    .window-controls {
+      height: 100%;
+      display: flex;
+      gap: 2px;
+      align-items: center;
+      padding-right: 3px;
+    }
+
+    .window-controls i {
+      width: 23px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border: 1px solid;
+      border-color: #fff #333 #333 #fff;
+      color: #111;
+      background: #d8d8d3;
+      font: normal 700 12px/1 Arial, sans-serif;
+    }
+
+    .menubar {
+      gap: 22px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--soft-line);
+      color: #2a2d2c;
+      background: #ecece8;
+      font-size: 11px;
+    }
+
+    .menubar span::first-letter {
+      text-decoration: underline;
+    }
+
+    main {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(290px, .65fr);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .primary {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: 1fr 170px;
+      border-right: 1px solid var(--line);
+    }
+
+    .hero {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(25px, 5vw, 64px);
+    }
+
+    .kicker {
+      margin: 0 0 13px;
       color: var(--green);
-      background: rgba(22, 62, 40, .45);
-      font: 700 .68rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+      font: 700 11px/1 "Courier New", Consolas, monospace;
       letter-spacing: .12em;
       text-transform: uppercase;
     }
 
-    .hero {
-      align-self: center;
-      display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(260px, .7fr);
-      gap: clamp(28px, 6vw, 76px);
-      align-items: end;
-    }
-
-    .eyebrow {
-      gap: 10px;
-      margin: 0 0 15px;
-      color: var(--green);
-      font: 700 .72rem/1 ui-monospace, SFMono-Regular, Consolas, monospace;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-    }
-
-    .eyebrow::before {
-      width: 22px;
-      height: 1px;
-      content: "";
-      background: currentColor;
-    }
-
     h1 {
-      max-width: 720px;
       margin: 0;
-      font-size: clamp(3.1rem, 8vw, 7.2rem);
-      font-weight: 720;
-      letter-spacing: -.075em;
-      line-height: .86;
+      font: 700 clamp(58px, 9vw, 112px)/.85 "Courier New", Consolas, monospace;
+      letter-spacing: -.09em;
+    }
+
+    .rule {
+      width: min(100%, 590px);
+      height: 1px;
+      margin: 22px 0 18px;
+      background: var(--line);
     }
 
     .summary {
-      max-width: 620px;
-      margin: clamp(20px, 3vh, 30px) 0 0;
-      color: var(--muted);
-      font-size: clamp(.98rem, 1.6vw, 1.12rem);
-      line-height: 1.65;
+      max-width: 610px;
+      margin: 0;
+      color: #353a38;
+      font: 15px/1.55 "Courier New", Consolas, monospace;
     }
 
     .actions {
+      display: flex;
       gap: 14px;
-      margin-top: clamp(24px, 4vh, 38px);
+      align-items: center;
+      margin-top: 25px;
     }
 
-    .button {
+    .download {
+      min-height: 42px;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      min-height: 48px;
-      padding: 0 22px;
-      border: 1px solid var(--green);
-      border-radius: 9px;
-      color: #07110b;
+      padding: 0 20px;
+      border: 2px solid;
+      border-color: #fff #484b49 #484b49 #fff;
+      color: #fff;
       background: var(--green);
-      font-weight: 800;
+      font: 700 12px/1 "Courier New", Consolas, monospace;
+      letter-spacing: .05em;
       text-decoration: none;
-      transition: transform .18s ease, background .18s ease;
+      text-transform: uppercase;
     }
 
-    .button:hover {
-      background: #b9ffd3;
-      transform: translateY(-2px);
+    .download:hover {
+      background: #105e35;
     }
 
-    .button:focus-visible {
-      outline: 3px solid rgba(149, 245, 189, .32);
-      outline-offset: 4px;
+    .download:active {
+      border-color: #484b49 #fff #fff #484b49;
+      transform: translate(1px, 1px);
+    }
+
+    .download:focus-visible {
+      outline: 2px dotted var(--ink);
+      outline-offset: 3px;
     }
 
     .version {
-      color: #77817c;
-      font: .72rem/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+      color: var(--muted);
+      font: 11px/1.4 "Courier New", Consolas, monospace;
+    }
+
+    .terminal,
+    .panel {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 28px 1fr;
+      background: var(--white);
+    }
+
+    .terminal {
+      border-top: 1px solid var(--line);
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 9px;
+      border-bottom: 1px solid var(--soft-line);
+      background: var(--panel);
+      font: 700 11px/1 "Courier New", Consolas, monospace;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .panel-title::after {
+      width: 14px;
+      height: 14px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #666;
+      content: "−";
+      color: #333;
+      font: 11px/12px Arial, sans-serif;
+      text-align: center;
+    }
+
+    .terminal-output {
+      padding: 12px 15px;
+      color: #0d5d31;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          rgba(22, 115, 66, .03) 0,
+          rgba(22, 115, 66, .03) 1px,
+          transparent 1px,
+          transparent 20px
+        ),
+        #fbfcfa;
+      font: 12px/1.65 "Courier New", Consolas, monospace;
+    }
+
+    .terminal-output p {
+      margin: 0;
+    }
+
+    .details {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+    }
+
+    .details .panel + .panel {
+      border-top: 1px solid var(--line);
     }
 
     .steps {
       display: grid;
-      gap: 1px;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--line);
+      align-content: center;
+      gap: 18px;
+      padding: 18px;
     }
 
     .step {
       display: grid;
-      grid-template-columns: 30px 1fr;
-      gap: 12px;
-      padding: clamp(15px, 2.5vh, 22px);
-      background: var(--panel);
+      grid-template-columns: 24px 1fr;
+      gap: 10px;
+      align-items: start;
     }
 
     .step b {
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
       color: var(--green);
-      font: 700 .8rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+      background: var(--green-soft);
+      font: 700 10px/1 "Courier New", Consolas, monospace;
     }
 
     .step h2 {
-      margin: 0 0 4px;
-      font-size: .92rem;
+      margin: 1px 0 4px;
+      font-size: 12px;
+      text-transform: uppercase;
     }
 
     .step p {
       margin: 0;
       color: var(--muted);
-      font-size: .78rem;
-      line-height: 1.5;
+      font: 11px/1.45 "Courier New", Consolas, monospace;
     }
 
-    footer {
-      gap: 24px;
-      color: #69736e;
-      font: .68rem/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
-      letter-spacing: .04em;
+    .specs {
+      width: 100%;
+      border-collapse: collapse;
+      align-self: center;
+      font: 11px/1.35 "Courier New", Consolas, monospace;
     }
 
-    footer span:last-child {
+    .specs td {
+      padding: 8px 11px;
+      border-bottom: 1px dotted #b9bbb7;
+    }
+
+    .specs td:first-child {
+      color: var(--muted);
+    }
+
+    .specs td:last-child {
       text-align: right;
     }
 
+    .statusbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2px;
+      padding: 2px;
+      background: #e6e6e1;
+      font: 10px/1 "Courier New", Consolas, monospace;
+    }
+
+    .statusbar span {
+      height: 20px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      border: 1px solid;
+      border-color: #777 #fff #fff #777;
+    }
+
+    .ready::before {
+      width: 8px;
+      height: 8px;
+      margin-right: 8px;
+      content: "";
+      background: var(--green);
+    }
+
     @media (max-width: 760px) {
-      main {
-        gap: 18px;
-        padding: 22px;
-      }
-
-      .hero {
-        grid-template-columns: 1fr;
-        gap: 24px;
-      }
-
-      h1 {
-        font-size: clamp(3rem, 17vw, 5.5rem);
-      }
-
-      .summary {
-        line-height: 1.5;
-      }
-
-      .steps {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .step {
-        grid-template-columns: 1fr;
-        gap: 5px;
-        padding: 13px;
-      }
-    }
-
-    @media (max-height: 660px) {
-      main {
-        gap: 14px;
-        padding: 18px 22px;
-      }
-
-      .hero {
-        gap: 20px;
-      }
-
-      .summary {
-        margin-top: 14px;
-        line-height: 1.45;
-      }
-
-      .actions {
-        margin-top: 16px;
-      }
-
-      .step {
-        padding-block: 11px;
-      }
-    }
-
-    @media (max-width: 520px) {
       body {
-        padding: 8px;
+        padding: 0;
+      }
+
+      .window {
+        height: 100dvh;
+        border: 0;
+        box-shadow: none;
       }
 
       main {
-        border-radius: 14px;
+        grid-template-columns: 1fr;
       }
 
-      .status,
-      footer span:last-child,
-      .step p {
+      .primary {
+        grid-template-rows: 1fr 145px;
+        border-right: 0;
+      }
+
+      .details {
         display: none;
       }
 
-      .steps {
-        grid-template-columns: 1fr;
+      .hero {
+        padding: 25px;
       }
 
-      .step {
-        grid-template-columns: 28px 1fr;
-        padding: 10px 12px;
+      h1 {
+        font-size: clamp(54px, 19vw, 88px);
+      }
+    }
+
+    @media (max-height: 570px) {
+      .primary {
+        grid-template-rows: 1fr;
+      }
+
+      .terminal,
+      .details .panel:last-child,
+      .menubar {
+        display: none;
+      }
+
+      .window {
+        grid-template-rows: 32px 1fr 26px;
+      }
+
+      .details {
+        grid-template-rows: 1fr;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .summary {
+        font-size: 12px;
+      }
+
+      .actions {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .statusbar span:last-child,
+      .window-controls i:first-child {
+        display: none;
       }
     }
   </style>
 </head>
 <body>
-  <main>
-    <header>
-      <a class="brand" href="#" aria-label="Lan Runner home">LAN / RUNNER</a>
-      <span class="status">Private beta</span>
+  <div class="window">
+    <header class="titlebar">
+      <div class="titlebar-brand">
+        <span class="app-icon" aria-hidden="true">L</span>
+        <span>Lanrunner — Public Beta</span>
+      </div>
+      <div class="window-controls" aria-hidden="true">
+        <i>_</i><i>□</i><i>×</i>
+      </div>
     </header>
 
-    <section class="hero" aria-labelledby="page-title">
-      <div>
-        <p class="eyebrow">Local network messenger</p>
-        <h1 id="page-title">Stay close.<br>Stay offline.</h1>
-        <p class="summary">
-          Lan Runner is a tiny encrypted messenger for people on the same Wi‑Fi
-          or local network. No accounts, no central server, and no internet required.
-        </p>
-        <div class="actions">
-          <a class="button" href="https://github.com/Linedrawguy/lanrunner/releases/tag/v0.1.0-beta">Download beta</a>
-          <span class="version">v0.1.0-beta · Windows</span>
+    <nav class="menubar" aria-label="Application menu">
+      <span>File</span>
+      <span>Network</span>
+      <span>Help</span>
+    </nav>
+
+    <main>
+      <section class="primary">
+        <div class="hero">
+          <p class="kicker">Local network messenger // public beta</p>
+          <h1>Lanrunner</h1>
+          <div class="rule"></div>
+          <p class="summary">
+            Encrypted messaging for people on the same Wi‑Fi or local network.
+            No accounts, no central server, and no internet required.
+          </p>
+          <div class="actions">
+            <a class="download" href="https://lanrunner-beta.quantum-bydesign.chatgpt.site/downloads/lanrunner-windows-amd64.zip">
+              Download for Windows
+            </a>
+            <span class="version">v0.1.0-beta<br>Windows 10/11 · 64-bit</span>
+          </div>
         </div>
-      </div>
 
-      <div class="steps" aria-label="How Lan Runner works">
-        <article class="step">
-          <b>01</b>
-          <div>
-            <h2>Run it</h2>
-            <p>Open the app on each device connected to the same network.</p>
+        <section class="terminal" aria-label="System status">
+          <div class="panel-title">Terminal / Status</div>
+          <div class="terminal-output">
+            <p>[READY] discovery channel available</p>
+            <p>[READY] encrypted transport available</p>
+            <p>[INFO ] messages stay on the local network</p>
+            <p>[INFO ] beta build ready for testing_</p>
           </div>
-        </article>
-        <article class="step">
-          <b>02</b>
-          <div>
-            <h2>Find nearby people</h2>
-            <p>Devices discover one another automatically—there is no sign-in.</p>
-          </div>
-        </article>
-        <article class="step">
-          <b>03</b>
-          <div>
-            <h2>Message securely</h2>
-            <p>Chats travel directly between devices over encrypted sessions.</p>
-          </div>
-        </article>
-      </div>
-    </section>
+        </section>
+      </section>
 
-    <footer>
-      <span>No cloud. No tracking. No account.</span>
-      <span>Built for trusted local networks.</span>
+      <aside class="details">
+        <section class="panel">
+          <div class="panel-title">How it works</div>
+          <div class="steps">
+            <article class="step">
+              <b>1</b>
+              <div>
+                <h2>Run</h2>
+                <p>Open Lanrunner on each Windows device.</p>
+              </div>
+            </article>
+            <article class="step">
+              <b>2</b>
+              <div>
+                <h2>Discover</h2>
+                <p>Nearby devices appear automatically on the same network.</p>
+              </div>
+            </article>
+            <article class="step">
+              <b>3</b>
+              <div>
+                <h2>Message</h2>
+                <p>Chats travel directly through encrypted peer sessions.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-title">Build information</div>
+          <table class="specs">
+            <tbody>
+              <tr><td>Release</td><td>0.1.0-beta</td></tr>
+              <tr><td>Platform</td><td>Windows x64</td></tr>
+              <tr><td>Internet</td><td>Not required</td></tr>
+              <tr><td>Accounts</td><td>None</td></tr>
+              <tr><td>Server</td><td>Peer-to-peer</td></tr>
+            </tbody>
+          </table>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="statusbar">
+      <span class="ready">STATUS: READY</span>
+      <span>PUBLIC TEST BUILD</span>
     </footer>
-  </main>
+  </div>
 </body>
 </html>

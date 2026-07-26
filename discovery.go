@@ -14,7 +14,7 @@ import (
 )
 
 // multicastGroup is a second discovery channel. Some networks pass multicast
-// but filter broadcast, and some do the reverse, so Lan Runner speaks both.
+// but filter broadcast, and some do the reverse, so Lanrunner speaks both.
 const multicastGroup = "239.255.42.99"
 
 // Announce is the discovery datagram. It is signed but not encrypted: it has to

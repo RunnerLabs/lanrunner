@@ -1,4 +1,4 @@
-# Putting Lan Runner on GitHub (private)
+# Putting Lanrunner on GitHub (private)
 
 ## Before you start: don't commit your keys
 
@@ -60,7 +60,7 @@ cd C:\Users\patri\lanrunner
 
 git init
 git add .
-git commit -m "Lan Runner: offline encrypted LAN messenger"
+git commit -m "Lanrunner: offline encrypted LAN messenger"
 git branch -M main
 ```
 
@@ -120,4 +120,4 @@ go build -o lanrunner.exe .
 
 That machine generates its **own** identity key on first run, which is correct —
 each device should have a distinct identity. Two devices sharing one key would
-look like impersonation to everyone else, and Lan Runner would flag it.
+look like impersonation to everyone else, and Lanrunner would flag it.
