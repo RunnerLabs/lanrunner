@@ -22,10 +22,8 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -68,21 +66,29 @@ var (
 	flagIdle      = flag.Duration("idle", 30*time.Minute, "shut down after this much inactivity (0 disables)")
 )
 
-func openBrowser(url string) error {
-	var command *exec.Cmd
-	switch runtime.GOOS {
-	case "windows":
-		command = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
-	case "darwin":
-		command = exec.Command("open", url)
-	default:
-		command = exec.Command("xdg-open", url)
-	}
-	return command.Start()
-}
-
 type runtimeState struct {
 	Port int `json:"port"`
+}
+
+func startupFatal(dataDir, format string, args ...any) {
+	message := fmt.Sprintf(format, args...)
+	logPath := ""
+	if dataDir != "" {
+		if err := os.MkdirAll(dataDir, 0700); err == nil {
+			logPath = filepath.Join(dataDir, "startup.log")
+			if logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600); err == nil {
+				_, _ = fmt.Fprintf(logFile, "%s  %s\n", time.Now().Format(time.RFC3339), message)
+				_ = logFile.Close()
+			}
+		}
+	}
+
+	detail := message
+	if logPath != "" {
+		detail += "\n\nStartup log:\n" + logPath
+	}
+	fmt.Fprintln(os.Stderr, "fatal:", message)
+	showStartupError(detail)
 }
 
 func lanrunnerAt(port int) bool {
@@ -305,7 +311,7 @@ func main() {
 	if err != nil {
 		uiListener, err = net.Listen("tcp4", "127.0.0.1:0")
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "fatal: cannot open local web interface:", err)
+			startupFatal(dataDir, "cannot open local web interface: %v", err)
 			return
 		}
 		*flagUI = uiListener.Addr().(*net.TCPAddr).Port
@@ -314,8 +320,8 @@ func main() {
 
 	id, fresh, err := LoadOrCreateIdentity(filepath.Join(dataDir, "identity.json"))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "fatal:", err)
-		os.Exit(1)
+		startupFatal(dataDir, "cannot load or create the local identity: %v", err)
+		return
 	}
 
 	host, _ := os.Hostname()
@@ -354,19 +360,22 @@ func main() {
 
 	ln, err := net.Listen("tcp4", "0.0.0.0:0")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "fatal: cannot open TCP transport:", err)
-		os.Exit(1)
+		startupFatal(dataDir, "cannot open TCP transport: %v", err)
+		return
 	}
 	app.tcpPort = ln.Addr().(*net.TCPAddr).Port
 
 	udp, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4zero, Port: 0})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "fatal: cannot open UDP send socket:", err)
-		os.Exit(1)
+		startupFatal(dataDir, "cannot open UDP send socket: %v", err)
+		return
 	}
 	app.udp = udp
 
 	app.logf("SYS", "local", "%s boot — protocol v%d, pid %d", appName, protoVersion, os.Getpid())
+	if runningUnderWine() {
+		app.logf("SYS", "local", "Wine compatibility mode detected — native browser bridge enabled")
+	}
 	if fresh {
 		app.logf("CRY", "local", "generated a new Ed25519 identity and X25519 static key in %s", dataDir)
 	} else {

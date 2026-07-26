@@ -12,8 +12,8 @@ bare-bones CSS served on loopback.
 Public beta page: <https://lanrunner-beta.quantum-bydesign.chatgpt.site>
 
 The public page provides a per-user Windows installer with Start Menu and
-optional desktop shortcuts. The application source remains in the private
-GitHub repository.
+optional desktop shortcuts. The application source is public in this
+repository.
 
 Zero third-party dependencies — everything is Go's standard library, so it
 builds on a machine that has never been online.
@@ -48,6 +48,26 @@ Launching Lanrunner again opens the existing interface instead of starting a
 second background copy. Use **Exit Lanrunner** in the interface to stop the
 background process and release its ports. Lanrunner also shuts itself down
 after 30 minutes without chat activity.
+
+### Wine / Linux
+
+Version 0.1.3-beta detects Wine and uses Wine's browser bridge instead of the
+older `rundll32` URL handoff. The installer carries both x86 and x64 builds so
+it can run in either kind of Wine prefix.
+
+For the most reliable Wine launch, download the portable Wine package, extract
+it, make the launcher executable, and run it:
+
+```sh
+chmod +x Launch-Lanrunner-with-Wine.sh
+./Launch-Lanrunner-with-Wine.sh
+```
+
+The launcher starts the Windows binary without its internal browser handoff,
+waits for the loopback UI, and opens `http://127.0.0.1:8080` through
+`xdg-open`. Its launch log is saved under
+`$XDG_STATE_HOME/lanrunner/wine-launch.log` (or
+`~/.local/state/lanrunner/wine-launch.log`).
 
 | flag | default | meaning |
 |---|---|---|
@@ -169,9 +189,10 @@ the disk. If that matters, put the data directory on an encrypted volume.
 ## Remaining limits, honestly
 
 - **Early beta.** The project now passes `go test ./...` and builds on Windows,
-  but it has not yet had broad real-world testing across different routers,
-  firewalls, VPNs, and operating systems. Expect rough edges while the discovery
-  and connection paths are exercised on more networks.
+  including x86 and x64 builds intended for Wine, but it has not yet had broad
+  real-world testing across different Wine releases, routers, firewalls, VPNs,
+  and operating systems. Expect rough edges while the discovery and connection
+  paths are exercised on more networks.
 - **Room messages are encrypted per session, not group-encrypted.** Each peer
   gets its own sealed copy over its own session. That's fine for a LAN-sized
   room, but it's N sends per message and there's no forward secrecy across
