@@ -7,10 +7,6 @@ import (
 	"runtime"
 )
 
-func runningUnderWine() bool {
-	return false
-}
-
 func openBrowser(url string) error {
 	if runtime.GOOS == "darwin" {
 		return exec.Command("open", url).Start()

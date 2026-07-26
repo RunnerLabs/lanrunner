@@ -373,9 +373,6 @@ func main() {
 	app.udp = udp
 
 	app.logf("SYS", "local", "%s boot — protocol v%d, pid %d", appName, protoVersion, os.Getpid())
-	if runningUnderWine() {
-		app.logf("SYS", "local", "Wine compatibility mode detected — native browser bridge enabled")
-	}
 	if fresh {
 		app.logf("CRY", "local", "generated a new Ed25519 identity and X25519 static key in %s", dataDir)
 	} else {

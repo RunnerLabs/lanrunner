@@ -1,6 +1,6 @@
 LANRUNNER 0.1.4-BETA — NATIVE LINUX QUICK START
 
-This package runs directly on Linux. Wine is not used or required.
+This package runs directly on Linux.
 
 1. Extract the archive.
 2. Open a terminal in the extracted directory.

@@ -12,15 +12,9 @@ import (
 var (
 	shell32DLL        = syscall.NewLazyDLL("shell32.dll")
 	shellExecuteWProc = shell32DLL.NewProc("ShellExecuteW")
-	ntdllDLL          = syscall.NewLazyDLL("ntdll.dll")
-	wineVersionProc   = ntdllDLL.NewProc("wine_get_version")
 	user32DLL         = syscall.NewLazyDLL("user32.dll")
 	messageBoxWProc   = user32DLL.NewProc("MessageBoxW")
 )
-
-func runningUnderWine() bool {
-	return wineVersionProc.Find() == nil
-}
 
 func shellExecuteURL(url string) error {
 	verb, err := syscall.UTF16PtrFromString("open")
@@ -49,11 +43,6 @@ func shellExecuteURL(url string) error {
 }
 
 func openBrowser(url string) error {
-	if runningUnderWine() {
-		if err := exec.Command("winebrowser.exe", url).Start(); err == nil {
-			return nil
-		}
-	}
 	if err := shellExecuteURL(url); err == nil {
 		return nil
 	}

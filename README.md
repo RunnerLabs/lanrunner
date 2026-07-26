@@ -52,7 +52,7 @@ after 30 minutes without chat activity.
 ### Native Linux
 
 Native Linux packages are available for x86_64 (`linux-amd64`) and ARM64
-(`linux-arm64`). They do not require Wine:
+(`linux-arm64`):
 
 ```sh
 chmod +x launch-lanrunner-linux.sh lanrunner
@@ -63,26 +63,6 @@ The launcher starts Lanrunner in the background, waits for the local interface,
 and opens `http://127.0.0.1:8080` through `xdg-open` or `gio`. Its launch log is
 saved under `$XDG_STATE_HOME/lanrunner/native-launch.log` (or
 `~/.local/state/lanrunner/native-launch.log`).
-
-### Wine
-
-Version 0.1.3-beta detects Wine and uses Wine's browser bridge instead of the
-older `rundll32` URL handoff. The installer carries both x86 and x64 builds so
-it can run in either kind of Wine prefix.
-
-For the most reliable Wine launch, download the portable Wine package, extract
-it, make the launcher executable, and run it:
-
-```sh
-chmod +x Launch-Lanrunner-with-Wine.sh
-./Launch-Lanrunner-with-Wine.sh
-```
-
-The launcher starts the Windows binary without its internal browser handoff,
-waits for the loopback UI, and opens `http://127.0.0.1:8080` through
-`xdg-open`. Its launch log is saved under
-`$XDG_STATE_HOME/lanrunner/wine-launch.log` (or
-`~/.local/state/lanrunner/wine-launch.log`).
 
 | flag | default | meaning |
 |---|---|---|
