@@ -49,7 +49,22 @@ second background copy. Use **Exit Lanrunner** in the interface to stop the
 background process and release its ports. Lanrunner also shuts itself down
 after 30 minutes without chat activity.
 
-### Wine / Linux
+### Native Linux
+
+Native Linux packages are available for x86_64 (`linux-amd64`) and ARM64
+(`linux-arm64`). They do not require Wine:
+
+```sh
+chmod +x launch-lanrunner-linux.sh lanrunner
+./launch-lanrunner-linux.sh
+```
+
+The launcher starts Lanrunner in the background, waits for the local interface,
+and opens `http://127.0.0.1:8080` through `xdg-open` or `gio`. Its launch log is
+saved under `$XDG_STATE_HOME/lanrunner/native-launch.log` (or
+`~/.local/state/lanrunner/native-launch.log`).
+
+### Wine
 
 Version 0.1.3-beta detects Wine and uses Wine's browser bridge instead of the
 older `rundll32` URL handoff. The installer carries both x86 and x64 builds so
@@ -189,8 +204,8 @@ the disk. If that matters, put the data directory on an encrypted volume.
 ## Remaining limits, honestly
 
 - **Early beta.** The project now passes `go test ./...` and builds on Windows,
-  including x86 and x64 builds intended for Wine, but it has not yet had broad
-  real-world testing across different Wine releases, routers, firewalls, VPNs,
+  Linux x86_64, Linux ARM64, and Windows x86/x64, but it has not yet had broad
+  real-world testing across different distributions, routers, firewalls, VPNs,
   and operating systems. Expect rough edges while the discovery and connection
   paths are exercised on more networks.
 - **Room messages are encrypted per session, not group-encrypted.** Each peer

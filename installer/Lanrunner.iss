@@ -1,5 +1,5 @@
 #define AppName "Lanrunner"
-#define AppVersion "0.1.3-beta"
+#define AppVersion "0.1.4-beta"
 #define AppPublisher "Linedrawguy"
 #define AppExeName "Lanrunner.exe"
 
@@ -23,9 +23,9 @@ CloseApplications=yes
 RestartApplications=no
 ArchitecturesAllowed=x86compatible x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-VersionInfoVersion=0.1.3.0
+VersionInfoVersion=0.1.4.0
 VersionInfoProductName={#AppName}
-VersionInfoProductVersion=0.1.3.0
+VersionInfoProductVersion=0.1.4.0
 VersionInfoDescription={#AppName} Windows Setup
 VersionInfoCompany={#AppPublisher}
 
