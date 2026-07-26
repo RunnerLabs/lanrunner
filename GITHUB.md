@@ -1,4 +1,4 @@
-# Putting Lanrunner on GitHub (private)
+# Lanrunner public GitHub repository
 
 ## Before you start: don't commit your keys
 
@@ -14,7 +14,7 @@ folder — so unless you ran with `-data .\something`, there's nothing to worry
 about. Check anyway:
 
 ```powershell
-cd C:\Users\patri\lanrunner
+cd C:\Users\YourName\lanrunner
 git status --short
 ```
 
@@ -25,11 +25,11 @@ If `identity.json` or `history/` appear in that list, stop and tell me.
 ## Option A — GitHub website, no tools (easiest)
 
 1. Go to <https://github.com/new>.
-2. Repository name: `lanrunner`. Select **Private**. Don't tick "Add a README"
+2. Repository name: `lanrunner`. Select **Public**. Don't tick "Add a README"
    — you already have one.
 3. Click **Create repository**.
 4. On the next page click **uploading an existing file**.
-5. Open `C:\Users\patri\lanrunner` in Explorer, select all the files, and drag
+5. Open `C:\Users\YourName\lanrunner` in Explorer, select all the files, and drag
    them into the browser. Upload these 14:
 
    ```
@@ -56,7 +56,7 @@ Install Git for Windows from <https://git-scm.com/download/win> if you don't
 have it, then:
 
 ```powershell
-cd C:\Users\patri\lanrunner
+cd C:\Users\YourName\lanrunner
 
 git init
 git add .
@@ -68,7 +68,7 @@ Create the empty **private** repo at <https://github.com/new> (no README, no
 .gitignore, no license), then:
 
 ```powershell
-git remote add origin https://github.com/YOUR-USERNAME/lanrunner.git
+git remote add origin https://github.com/trunninthisshit/lanrunner.git
 git push -u origin main
 ```
 
@@ -83,37 +83,17 @@ git push
 
 ---
 
-## Getting at it from your other account
+## Working from another computer
 
-This is the part that isn't obvious: **a private repo is visible only to the
-account that owns it.** Your second account won't see it just by being yours —
-GitHub has no concept of "my other account."
-
-From the account that owns the repo:
-
-1. Open the repo → **Settings** → **Collaborators** (left sidebar).
-2. Click **Add people**.
-3. Enter your other account's username or the email on it.
-4. Send the invite.
-
-Then sign in as the other account, check its notifications or email, and accept.
-It'll have full access from then on.
-
-Private repos allow unlimited collaborators on the free plan, so this costs
-nothing.
-
-### Alternative: transfer to an organisation
-
-If you expect to juggle both accounts regularly, make a free organisation, move
-the repo into it, and add both accounts as members. Slightly more setup, but you
-stop thinking about which account owns what.
+The source is public, so any computer can clone it. Sign in as the repository
+owner only when you need to push changes or publish a release.
 
 ---
 
 ## Cloning it on the other machine
 
 ```powershell
-git clone https://github.com/YOUR-USERNAME/lanrunner.git
+git clone https://github.com/trunninthisshit/lanrunner.git
 cd lanrunner
 go build -o lanrunner.exe .
 ```

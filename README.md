@@ -9,7 +9,10 @@ bare-bones CSS served on loopback.
 > lives in [`site/index.html`](site/index.html); it is intentionally separate
 > from the in-app interface embedded by the Go program.
 
-Public beta page: <https://lanrunner-beta.quantum-bydesign.chatgpt.site>
+Public beta page: <https://trunninthisshit.github.io/lanrunner/>
+
+Official source and releases:
+<https://github.com/trunninthisshit/lanrunner>
 
 The public page provides a per-user Windows installer with Start Menu and
 optional desktop shortcuts. The application source is public in this
@@ -23,17 +26,17 @@ builds on a machine that has never been online.
 Needs Go 1.21+ (crypto/ecdh landed in 1.20).
 
 ```
-go build -o lanrunner .          # macOS / Linux
-go build -o lanrunner.exe .      # Windows
+go build -trimpath -o lanrunner .          # macOS / Linux
+go build -trimpath -o lanrunner.exe .      # Windows
 ```
 
 One self-contained binary; the HTML is compiled in. Cross-compile for the rest
 of the fleet from one machine:
 
 ```
-GOOS=windows GOARCH=amd64 go build -o lanrunner.exe .
-GOOS=darwin  GOARCH=arm64 go build -o lanrunner-mac .
-GOOS=linux   GOARCH=amd64 go build -o lanrunner-linux .
+GOOS=windows GOARCH=amd64 go build -trimpath -o lanrunner.exe .
+GOOS=darwin  GOARCH=arm64 go build -trimpath -o lanrunner-mac .
+GOOS=linux   GOARCH=amd64 go build -trimpath -o lanrunner-linux .
 ```
 
 ## Run

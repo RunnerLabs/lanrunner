@@ -18,7 +18,7 @@ The folder these files are in is temporary. Copy the whole `lanrunner` folder
 to somewhere stable, for example:
 
 ```
-C:\Users\patri\lanrunner
+C:\Users\YourName\lanrunner
 ```
 
 ## Step 2 — Install Go
@@ -41,7 +41,7 @@ You should see something like `go version go1.23.x windows/amd64`. If you get
 Open PowerShell and go to the folder:
 
 ```powershell
-cd C:\Users\patri\lanrunner
+cd C:\Users\YourName\lanrunner
 go build -o lanrunner.exe .
 ```
 
@@ -143,7 +143,7 @@ default messaging port.
 ## Everyday use
 
 ```powershell
-cd C:\Users\patri\lanrunner
+cd C:\Users\YourName\lanrunner
 .\lanrunner.exe -nick pat
 ```
 

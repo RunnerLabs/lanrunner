@@ -1,6 +1,7 @@
 #define AppName "Lanrunner"
 #define AppVersion "0.1.5-beta"
-#define AppPublisher "Linedrawguy"
+#define AppPublisher "trunninthisshit"
+#define AppProjectURL "https://github.com/trunninthisshit/lanrunner"
 #define AppExeName "Lanrunner.exe"
 
 [Setup]
@@ -9,6 +10,9 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher={#AppPublisher}
+AppPublisherURL={#AppProjectURL}
+AppSupportURL={#AppProjectURL}/issues
+AppUpdatesURL={#AppProjectURL}/releases
 DefaultDirName={localappdata}\Programs\{#AppName}
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
