@@ -95,6 +95,9 @@ Allow its firewall prompt too, then open `http://127.0.0.1:8080` on *that*
 machine. Within a few seconds you each appear in the other's Buddy List. Type in
 the LAN Room and it arrives.
 
+Lanrunner uses UDP `47100` for discovery and TCP `47101` for encrypted
+messaging. Both must be allowed inbound on the Private network.
+
 Both devices must be on the same Wi-Fi or switch. Different Wi-Fi networks,
 guest network, or a phone hotspot won't work.
 
@@ -103,12 +106,13 @@ guest network, or a phone hotspot won't work.
 Open a second PowerShell window in the same folder:
 
 ```powershell
-.\lanrunner.exe -nick bob -ui 8081 -data .\bob-data
+.\lanrunner.exe -nick bob -ui 8081 -tcp 47102 -data .\bob-data
 ```
 
 Then open `http://127.0.0.1:8081` in a second browser tab. You'll see two
-buddies talking to each other. The `-data .\bob-data` part matters — without it
-the second copy reuses the same identity key and thinks it's you.
+buddies talking to each other. The separate `-data` and `-tcp` values matter —
+without them the second copy reuses the same identity key and contends for the
+default messaging port.
 
 ---
 
@@ -132,7 +136,8 @@ the second copy reuses the same identity key and thinks it's you.
 | Fields show `—`, "reconnecting…" | You opened the HTML file directly. Use `http://127.0.0.1:8080`. |
 | `go: not recognized` | Reopen PowerShell after installing Go. |
 | Buddy list stays empty | Firewall prompt was denied, or the other device is on a different network. Check Diagnostics. |
-| Works one direction only | One side's inbound is blocked. Messaging still works over the session that did open. |
+| Peer appears but connection times out | Allow inbound TCP `47101` on the peer device. |
+| Works one direction only | One side's inbound TCP `47101` is blocked. |
 | Two copies, one identity | Give the second `-data .\bob-data`. |
 
 ## Everyday use

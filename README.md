@@ -64,10 +64,33 @@ and opens `http://127.0.0.1:8080` through `xdg-open` or `gio`. Its launch log is
 saved under `$XDG_STATE_HOME/lanrunner/native-launch.log` (or
 `~/.local/state/lanrunner/native-launch.log`).
 
+### Firewall
+
+Lanrunner uses fixed LAN ports so firewall rules survive restarts:
+
+- UDP `47100` for peer discovery
+- TCP `47101` for encrypted messaging
+
+On Linux with UFW:
+
+```sh
+sudo ufw allow 47100/udp
+sudo ufw allow 47101/tcp
+```
+
+On Windows, allow `Lanrunner.exe` on Private networks when Defender prompts.
+Administrators can also create explicit inbound rules in PowerShell:
+
+```powershell
+New-NetFirewallRule -DisplayName "Lanrunner Discovery" -Direction Inbound -Protocol UDP -LocalPort 47100 -Action Allow -Profile Private
+New-NetFirewallRule -DisplayName "Lanrunner Messaging" -Direction Inbound -Protocol TCP -LocalPort 47101 -Action Allow -Profile Private
+```
+
 | flag | default | meaning |
 |---|---|---|
 | `-nick` | hostname | display name |
 | `-ui` | `8080` | loopback UI port |
+| `-tcp` | `47101` | TCP messaging port; `0` chooses an automatic port |
 | `-disco` | `47100` | UDP discovery port — must match on every device |
 | `-peer` | — | seed a peer by address, repeatable: `-peer 192.168.1.42` |
 | `-data` | OS config dir | where keys, trust store and history live |
@@ -76,9 +99,10 @@ saved under `$XDG_STATE_HOME/lanrunner/native-launch.log` (or
 | `-no-multicast` | off | broadcast only |
 | `-v` | off | log heartbeat frames too |
 
-Two instances on one machine: `./lanrunner -nick bob -ui 8081 -data ./bob`.
-Give the second one its own `-data` directory or it will reuse the same
-identity key.
+Two instances on one machine:
+`./lanrunner -nick bob -ui 8081 -tcp 47102 -data ./bob`. Give the second one
+its own `-data` directory and TCP port or it will reuse the same identity key
+and contend for the default messaging port.
 
 ## Security model
 

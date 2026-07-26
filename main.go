@@ -57,6 +57,7 @@ func (s *stringList) Set(v string) error {
 var (
 	flagNick      = flag.String("nick", "", "display name (default: hostname)")
 	flagUI        = flag.Int("ui", 8080, "loopback UI port")
+	flagTCP       = flag.Int("tcp", 47101, "TCP messaging port (0 chooses an automatic port)")
 	flagDisco     = flag.Int("disco", 47100, "UDP discovery port — must match on every device")
 	flagData      = flag.String("data", "", "data directory for keys, trust store and history")
 	flagNoMc      = flag.Bool("no-multicast", false, "disable the multicast discovery channel")
@@ -298,6 +299,10 @@ func main() {
 		}
 		dataDir = filepath.Join(base, "lanrunner")
 	}
+	if *flagTCP < 0 || *flagTCP > 65535 {
+		startupFatal(dataDir, "invalid TCP messaging port %d; choose 0 through 65535", *flagTCP)
+		return
+	}
 
 	if url, running := existingLanrunner(dataDir, *flagUI); running {
 		fmt.Printf("%s is already running at %s\n", appName, url)
@@ -358,12 +363,21 @@ func main() {
 		}
 	}
 
-	ln, err := net.Listen("tcp4", "0.0.0.0:0")
+	requestedTCP := *flagTCP
+	ln, tcpBindErr := net.Listen("tcp4", fmt.Sprintf("0.0.0.0:%d", requestedTCP))
+	err = tcpBindErr
+	if err != nil && requestedTCP != 0 {
+		ln, err = net.Listen("tcp4", "0.0.0.0:0")
+	}
 	if err != nil {
 		startupFatal(dataDir, "cannot open TCP transport: %v", err)
 		return
 	}
 	app.tcpPort = ln.Addr().(*net.TCPAddr).Port
+	if tcpBindErr != nil && requestedTCP != 0 {
+		app.logf("NET", "local", "TCP port %d unavailable (%v) — using automatic port %d",
+			requestedTCP, tcpBindErr, app.tcpPort)
+	}
 
 	udp, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4zero, Port: 0})
 	if err != nil {

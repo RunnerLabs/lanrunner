@@ -130,7 +130,8 @@ func (d *Diag) evaluate() {
 	fwHint := "allow lanrunner through the firewall on your private network"
 	switch runtime.GOOS {
 	case "windows":
-		fwHint = "Windows Defender Firewall: allow lanrunner.exe on Private networks (inbound TCP and UDP)"
+		fwHint = fmt.Sprintf("Windows Defender Firewall: allow lanrunner.exe on Private networks (UDP %d and TCP %d inbound)",
+			a.discoPort, a.tcpPort)
 	case "darwin":
 		fwHint = "System Settings → Network → Firewall → Options: allow incoming connections for lanrunner"
 	case "linux":
@@ -142,7 +143,7 @@ func (d *Diag) evaluate() {
 		d.set("crit",
 			"Discovery socket never bound",
 			fmt.Sprintf("Nothing is listening on UDP %d, so no peer can ever be seen.", a.discoPort),
-			fmt.Sprintf("another process may hold port %d — try -disco 47101 on every device", a.discoPort),
+			fmt.Sprintf("another process may hold port %d — try -disco 47102 on every device", a.discoPort),
 			"on some systems binding a low port needs elevated rights; this one should not")
 
 	case d.loopback.Load() == 0 && d.announces.Load() > 2:
