@@ -44,6 +44,8 @@ GOOS=linux   GOARCH=amd64 go build -o lanrunner-linux .
 
 Lanrunner opens <http://127.0.0.1:8080> in your default browser automatically.
 Start it on another device and the two find each other in about three seconds.
+Launching Lanrunner again opens the existing interface instead of starting a
+second background copy.
 
 | flag | default | meaning |
 |---|---|---|

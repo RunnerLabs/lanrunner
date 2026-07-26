@@ -1,5 +1,5 @@
 #define AppName "Lanrunner"
-#define AppVersion "0.1.0-beta"
+#define AppVersion "0.1.1-beta"
 #define AppPublisher "Linedrawguy"
 #define AppExeName "Lanrunner.exe"
 
@@ -23,9 +23,9 @@ CloseApplications=yes
 RestartApplications=no
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-VersionInfoVersion=0.1.0.0
+VersionInfoVersion=0.1.1.0
 VersionInfoProductName={#AppName}
-VersionInfoProductVersion=0.1.0.0
+VersionInfoProductVersion=0.1.1.0
 VersionInfoDescription={#AppName} Windows Setup
 VersionInfoCompany={#AppPublisher}
 
@@ -33,7 +33,7 @@ VersionInfoCompany={#AppPublisher}
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 
 [Files]
-Source: "..\dist\lanrunner-windows-amd64.exe"; DestDir: "{app}"; DestName: "{#AppExeName}"; Flags: ignoreversion
+Source: "..\dist\Lanrunner.exe"; DestDir: "{app}"; DestName: "{#AppExeName}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"

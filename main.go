@@ -14,8 +14,10 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -74,6 +76,52 @@ func openBrowser(url string) error {
 		command = exec.Command("xdg-open", url)
 	}
 	return command.Start()
+}
+
+type runtimeState struct {
+	Port int `json:"port"`
+}
+
+func lanrunnerAt(port int) bool {
+	if port < 1 || port > 65535 {
+		return false
+	}
+	client := &http.Client{Timeout: 500 * time.Millisecond}
+	response, err := client.Get(fmt.Sprintf("http://127.0.0.1:%d/", port))
+	if err != nil {
+		return false
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return false
+	}
+	body, err := io.ReadAll(io.LimitReader(response.Body, 64<<10))
+	return err == nil &&
+		strings.Contains(strings.ToLower(string(body)), "<title>lanrunner")
+}
+
+func existingLanrunner(dataDir string, preferredPort int) (string, bool) {
+	ports := []int{}
+	statePath := filepath.Join(dataDir, "runtime.json")
+	if content, err := os.ReadFile(statePath); err == nil {
+		var state runtimeState
+		if json.Unmarshal(content, &state) == nil {
+			ports = append(ports, state.Port)
+		}
+	}
+	ports = append(ports, preferredPort)
+
+	seen := map[int]bool{}
+	for _, port := range ports {
+		if seen[port] {
+			continue
+		}
+		seen[port] = true
+		if lanrunnerAt(port) {
+			return fmt.Sprintf("http://127.0.0.1:%d", port), true
+		}
+	}
+	return "", false
 }
 
 // ---------------------------------------------------------------- peer table
@@ -200,6 +248,25 @@ func main() {
 		dataDir = filepath.Join(base, "lanrunner")
 	}
 
+	if url, running := existingLanrunner(dataDir, *flagUI); running {
+		fmt.Printf("%s is already running at %s\n", appName, url)
+		if !*flagNoBrowser {
+			_ = openBrowser(url)
+		}
+		return
+	}
+
+	uiListener, err := net.Listen("tcp4", fmt.Sprintf("127.0.0.1:%d", *flagUI))
+	if err != nil {
+		uiListener, err = net.Listen("tcp4", "127.0.0.1:0")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "fatal: cannot open local web interface:", err)
+			return
+		}
+		*flagUI = uiListener.Addr().(*net.TCPAddr).Port
+	}
+	defer uiListener.Close()
+
 	id, fresh, err := LoadOrCreateIdentity(filepath.Join(dataDir, "identity.json"))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "fatal:", err)
@@ -231,6 +298,12 @@ func main() {
 		subs:      map[chan []byte]bool{},
 	}
 	app.diag = NewDiag(app)
+	runtimePath := filepath.Join(dataDir, "runtime.json")
+	if content, err := json.Marshal(runtimeState{Port: *flagUI}); err == nil {
+		if err := os.WriteFile(runtimePath, content, 0600); err == nil {
+			defer os.Remove(runtimePath)
+		}
+	}
 
 	ln, err := net.Listen("tcp4", "0.0.0.0:0")
 	if err != nil {
@@ -271,12 +344,11 @@ func main() {
 
 	mux := http.NewServeMux()
 	app.routes(mux)
-	srv := &http.Server{Addr: fmt.Sprintf("127.0.0.1:%d", *flagUI), Handler: mux}
+	srv := &http.Server{Handler: mux}
 	go func() {
 		app.logf("SYS", "local", "UI bound to http://127.0.0.1:%d (loopback only)", *flagUI)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			fmt.Fprintln(os.Stderr, "fatal: UI server:", err)
-			os.Exit(1)
+		if err := srv.Serve(uiListener); err != nil && err != http.ErrServerClosed {
+			app.logf("SYS", "local", "UI server stopped: %v", err)
 		}
 	}()
 
