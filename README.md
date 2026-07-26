@@ -11,6 +11,10 @@ bare-bones CSS served on loopback.
 
 Public beta page: <https://lanrunner-beta.quantum-bydesign.chatgpt.site>
 
+The public page provides a per-user Windows installer with Start Menu and
+optional desktop shortcuts. The application source remains in the private
+GitHub repository.
+
 Zero third-party dependencies — everything is Go's standard library, so it
 builds on a machine that has never been online.
 
@@ -38,8 +42,8 @@ GOOS=linux   GOARCH=amd64 go build -o lanrunner-linux .
 ./lanrunner -nick alice
 ```
 
-Open <http://127.0.0.1:8080>. Start it on another device and the two find each
-other in about three seconds.
+Lanrunner opens <http://127.0.0.1:8080> in your default browser automatically.
+Start it on another device and the two find each other in about three seconds.
 
 | flag | default | meaning |
 |---|---|---|
@@ -48,6 +52,7 @@ other in about three seconds.
 | `-disco` | `47100` | UDP discovery port — must match on every device |
 | `-peer` | — | seed a peer by address, repeatable: `-peer 192.168.1.42` |
 | `-data` | OS config dir | where keys, trust store and history live |
+| `-no-browser` | off | do not open the local web UI automatically |
 | `-no-multicast` | off | broadcast only |
 | `-v` | off | log heartbeat frames too |
 

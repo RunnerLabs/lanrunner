@@ -19,8 +19,10 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -51,14 +53,28 @@ func (s *stringList) Set(v string) error {
 }
 
 var (
-	flagNick    = flag.String("nick", "", "display name (default: hostname)")
-	flagUI      = flag.Int("ui", 8080, "loopback UI port")
-	flagDisco   = flag.Int("disco", 47100, "UDP discovery port — must match on every device")
-	flagData    = flag.String("data", "", "data directory for keys, trust store and history")
-	flagNoMc    = flag.Bool("no-multicast", false, "disable the multicast discovery channel")
-	flagSeeds   stringList
-	flagVerbose = flag.Bool("v", false, "log every heartbeat frame too")
+	flagNick      = flag.String("nick", "", "display name (default: hostname)")
+	flagUI        = flag.Int("ui", 8080, "loopback UI port")
+	flagDisco     = flag.Int("disco", 47100, "UDP discovery port — must match on every device")
+	flagData      = flag.String("data", "", "data directory for keys, trust store and history")
+	flagNoMc      = flag.Bool("no-multicast", false, "disable the multicast discovery channel")
+	flagSeeds     stringList
+	flagVerbose   = flag.Bool("v", false, "log every heartbeat frame too")
+	flagNoBrowser = flag.Bool("no-browser", false, "do not open the local web UI automatically")
 )
+
+func openBrowser(url string) error {
+	var command *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		command = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+	case "darwin":
+		command = exec.Command("open", url)
+	default:
+		command = exec.Command("xdg-open", url)
+	}
+	return command.Start()
+}
 
 // ---------------------------------------------------------------- peer table
 
@@ -266,6 +282,14 @@ func main() {
 
 	fmt.Printf("\n  %s ready — open http://127.0.0.1:%d\n  your fingerprint: %s\n\n",
 		appName, *flagUI, SafetyNumber(id.FP))
+	if !*flagNoBrowser {
+		go func() {
+			time.Sleep(300 * time.Millisecond)
+			if err := openBrowser(fmt.Sprintf("http://127.0.0.1:%d", *flagUI)); err != nil {
+				app.logf("SYS", "local", "could not open the web UI automatically: %v", err)
+			}
+		}()
+	}
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
