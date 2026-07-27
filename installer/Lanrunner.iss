@@ -1,7 +1,7 @@
 #define AppName "Lanrunner"
 #define AppVersion "0.1.5-beta"
-#define AppPublisher "trunninthisshit"
-#define AppProjectURL "https://github.com/trunninthisshit/lanrunner"
+#define AppPublisher "RunnerLabs"
+#define AppProjectURL "https://github.com/RunnerLabs/lanrunner"
 #define AppExeName "Lanrunner.exe"
 
 [Setup]
