@@ -9,10 +9,10 @@ bare-bones CSS served on loopback.
 > lives in [`site/index.html`](site/index.html); it is intentionally separate
 > from the in-app interface embedded by the Go program.
 
-Public beta page: <https://runnerlabs.github.io/lanrunner/>
+Public beta page: <https://trunninthisshit.github.io/lanrunner/>
 
 Official source and releases:
-<https://github.com/RunnerLabs/lanrunner>
+<https://github.com/trunninthisshit/lanrunner>
 
 The public page provides a per-user Windows installer with Start Menu and
 optional desktop shortcuts. The application source is public in this
