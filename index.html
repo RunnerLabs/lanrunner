@@ -380,6 +380,73 @@
   .l.CRY .lv { color: #8e80ff; }
   .l.SEC { color: #ff9aab; background: #25050d; }
 
+  /* Guest kits — folders handed to people who do not run Lan Runner. */
+  #gnote { margin: 4px 0 7px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+  #gform input[type=text] {
+    width: 100%;
+    margin-bottom: 5px;
+    padding: 5px 7px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--paper);
+    font: 10px/1.4 var(--mono);
+  }
+  #gform input[type=text]:focus { border-color: var(--signal); outline: none; }
+  #gform input[type=text]::placeholder { color: var(--muted); }
+  #gform label.chk {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 9.5px;
+    line-height: 1.45;
+    cursor: pointer;
+  }
+  #gstatus { margin: 7px 0 5px; color: var(--muted); font-family: var(--mono); font-size: 9px; letter-spacing: .06em; }
+  #gerr {
+    display: none;
+    margin: 6px 0;
+    padding: 5px 6px;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    font-size: 9.5px;
+    line-height: 1.45;
+  }
+  .gk {
+    margin-bottom: 6px;
+    padding: 7px 8px;
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--muted);
+    background: rgba(255, 255, 255, .045);
+  }
+  .gk.on { border-left-color: var(--ok); }
+  .gk.dead { opacity: .5; border-left-color: var(--danger); }
+  .gk .gname {
+    font: 12px/1.2 var(--display);
+    letter-spacing: -.02em;
+    cursor: pointer;
+  }
+  .gk .gname:hover { color: var(--ok); }
+  .gk .gdot { color: var(--muted); }
+  .gk.on .gdot { color: var(--ok); }
+  .gk .gmeta {
+    margin-top: 2px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 9px;
+    word-break: break-all;
+  }
+  .gk .plain {
+    margin-left: 5px;
+    padding: 1px 4px;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    font: 700 8px/1.3 var(--mono);
+    letter-spacing: .08em;
+    vertical-align: 1px;
+  }
+  .gk .gact { margin-top: 6px; }
+  .gk .gact .btn { margin: 0 3px 3px 0; padding: 3px 6px; font-size: 8.5px; }
+
   @media (max-width: 900px) {
     #wrap {
       grid-template-columns: 190px 1fr;
@@ -445,6 +512,19 @@
       <ul id="fixes"></ul>
       <h3>Counters</h3>
       <table class="kv" id="counters"></table>
+      <h3>Guest Kits</h3>
+      <div id="gnote">Make a folder for someone who does not run Lan Runner. They open its
+        index.html on this network and you two can talk.</div>
+      <form id="gform">
+        <input type="text" id="glabel" maxlength="24" placeholder="who is it for? e.g. sam" autocomplete="off">
+        <input type="text" id="gfolder" placeholder="output folder (blank = default)" autocomplete="off">
+        <label class="chk"><input type="checkbox" id="gplain"> allow an unencrypted session if their browser cannot do crypto</label>
+        <button type="submit" class="btn">Generate guest folder</button>
+      </form>
+      <div id="gerr"></div>
+      <div id="gstatus"></div>
+      <div id="guests"></div>
+
       <h3>Selected Peer</h3>
       <div id="selpeer" class="empty" style="padding:2px">click a buddy</div>
     </div>
@@ -474,6 +554,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var out = $('out'), msgsEl = $('msgs'), peerlist = $('peerlist'), tabsEl = $('tabs');
   var sec = 0, me = null, peers = [], selected = null;
+  var guests = { enabled: false, port: 0, hosts: [], kitsdir: '', invites: [] };
 
   // conversation state: id -> {id, name, msgs:[], unread, loaded}
   var convs = { room: { id: 'room', name: 'LAN Room', msgs: [], unread: 0, loaded: false, loadToken: 0 } };
@@ -516,8 +597,19 @@
   $('clear').addEventListener('click', function () { out.innerHTML = ''; });
 
   // ---- tabs & messages ---------------------------------------------------
+  // The invite label is what YOU named the kit, so it is the trustworthy part.
+  // The guest picks their own display name, which means it could be chosen to
+  // impersonate a peer — so it never stands alone as the identity.
+  function guestName(id) {
+    for (var i = 0; i < guests.invites.length; i++) {
+      if (guests.invites[i].id === id) return guests.invites[i].label + ' (guest)';
+    }
+    return null;
+  }
   function convName(id) {
     if (id === 'room') return 'LAN Room';
+    var g = guestName(id);
+    if (g) return g;
     for (var i = 0; i < peers.length; i++) if (peers[i].fp === id) return peers[i].nick;
     return id.substring(0, 8);
   }
@@ -774,6 +866,177 @@
     box.appendChild(dm);
   }
 
+  // ---- guest kits --------------------------------------------------------
+  function guestErr(msg) {
+    var box = $('gerr');
+    box.textContent = msg || '';
+    box.style.display = msg ? 'block' : 'none';
+  }
+  function guestPost(path, body, done) {
+    fetch(path, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    }).then(function (r) {
+      if (r.ok) { guestErr(''); if (done) done(null); return; }
+      return r.text().then(function (t) {
+        guestErr(t.trim() || ('request failed: ' + r.status));
+        if (done) done(new Error(t));
+      });
+    }).catch(function (e) {
+      guestErr('request failed: ' + e.message);
+      if (done) done(e);
+    });
+  }
+  function actionBtn(text, title, fn) {
+    var b = document.createElement('button');
+    b.className = 'btn';
+    b.type = 'button';
+    b.textContent = text;
+    if (title) b.title = title;
+    b.addEventListener('click', fn);
+    return b;
+  }
+  function renderGuests() {
+    var box = $('guests'), st = $('gstatus');
+    box.innerHTML = '';
+
+    if (!guests.enabled) {
+      st.textContent = 'guest kits disabled (-no-guest)';
+      $('gform').style.display = 'none';
+      return;
+    }
+    $('gform').style.display = '';
+    st.textContent = guests.port
+      ? 'gateway ' + (guests.hosts[0] || '?') + ':' + guests.port + ' — open while an invite is live'
+      : 'gateway closed — no live invites, so no LAN port is open';
+
+    if (!guests.invites.length) {
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.style.padding = '2px';
+      e.textContent = 'no guest kits yet';
+      box.appendChild(e);
+      return;
+    }
+
+    guests.invites.forEach(function (g) {
+      var dead = g.revoked || g.expired;
+      var d = document.createElement('div');
+      d.className = 'gk' + (g.online ? ' on' : '') + (dead ? ' dead' : '');
+
+      var name = document.createElement('div');
+      name.className = 'gname';
+      var dot = document.createElement('span');
+      dot.className = 'gdot';
+      dot.textContent = '● ';
+      name.appendChild(dot);
+      name.appendChild(document.createTextNode(g.label));
+      if (g.plain) {
+        var p = document.createElement('span');
+        p.className = 'plain';
+        p.textContent = 'PLAINTEXT OK';
+        name.appendChild(p);
+      }
+      name.title = 'Open this guest conversation';
+      name.addEventListener('click', function () { openConv(g.id); });
+      d.appendChild(name);
+
+      var status = g.revoked ? 'REVOKED'
+                 : g.expired ? 'EXPIRED'
+                 : g.online ? g.online + ' connected'
+                 : 'nobody connected';
+      var m1 = document.createElement('div');
+      m1.className = 'gmeta';
+      m1.textContent = 'invite ' + g.id + '  ' + status;
+      d.appendChild(m1);
+
+      if (g.last_nick) {
+        var m0 = document.createElement('div');
+        m0.className = 'gmeta';
+        m0.textContent = 'calls themselves "' + g.last_nick + '"';
+        d.appendChild(m0);
+      }
+
+      var m2 = document.createElement('div');
+      m2.className = 'gmeta';
+      m2.textContent = g.folder;
+      d.appendChild(m2);
+
+      var m3 = document.createElement('div');
+      m3.className = 'gmeta';
+      m3.textContent = 'made ' + g.created +
+        (g.expires ? '  expires ' + g.expires : '  no expiry') +
+        (g.last_seen ? '  last seen ' + g.last_seen : '');
+      d.appendChild(m3);
+
+      var act = document.createElement('div');
+      act.className = 'gact';
+      act.appendChild(actionBtn('Message', 'Open this guest conversation',
+        function () { openConv(g.id); }));
+
+      if (!dead) {
+        act.appendChild(actionBtn('Open folder', 'Show the generated folder on this machine',
+          function () { guestPost('/guests/open', { id: g.id }); }));
+        act.appendChild(actionBtn('Refresh', 'Rewrite the folder with the current address and display name',
+          function () { guestPost('/guests/refresh', { id: g.id }, loadGuests); }));
+        act.appendChild(actionBtn('Revoke', 'Cut this kit off immediately',
+          function () {
+            if (!window.confirm('Revoke "' + g.label + '"? Their copy of the folder stops working right away.')) return;
+            guestPost('/guests/revoke', { id: g.id }, loadGuests);
+          }));
+      } else {
+        act.appendChild(actionBtn('Forget', 'Remove this dead invite from the list',
+          function () { guestPost('/guests/remove', { id: g.id }, loadGuests); }));
+      }
+      d.appendChild(act);
+      box.appendChild(d);
+    });
+  }
+  function loadGuests() {
+    fetch('/guests')
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        guests = j;
+        guests.invites = j.invites || [];
+        guests.hosts = j.hosts || [];
+        renderGuests();
+        renderTabs();
+      })
+      .catch(function () {});
+  }
+  $('gform').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var label = $('glabel').value.trim();
+    if (!label) { guestErr('give the kit a name so you can tell them apart'); return; }
+    var btn = $('gform').querySelector('button');
+    btn.disabled = true;
+    btn.textContent = 'GENERATING…';
+    fetch('/guests/new', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        label: label,
+        folder: $('gfolder').value.trim(),
+        allow_plain: $('gplain').checked
+      })
+    }).then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { throw new Error(t.trim() || ('http ' + r.status)); });
+      return r.json();
+    }).then(function (j) {
+      guestErr('');
+      $('glabel').value = '';
+      loadGuests();
+      openConv(j.id);
+      window.alert('Guest folder created:\n\n' + j.folder +
+        '\n\nSend the whole folder to ' + label + '. They open index.html on this network.\n' +
+        'It contains a private invite token — send it the way you would send a password.');
+    }).catch(function (e) {
+      guestErr(e.message);
+    }).then(function () {
+      btn.disabled = false;
+      btn.textContent = 'Generate guest folder';
+    });
+  });
+
   // ---- diagnostics -------------------------------------------------------
   function renderDiag(d) {
     var v = $('verdict');
@@ -832,6 +1095,15 @@
       case 'msg': addMsg(e.data); break;
       case 'ack': markAck(e.data); break;
       case 'peers': peers = e.data || []; renderPeers(); renderTabs(); break;
+      case 'guests':
+        guests.enabled = true;
+        guests.port = e.data.port;
+        guests.hosts = e.data.hosts || [];
+        guests.kitsdir = e.data.kitsdir || '';
+        guests.invites = e.data.invites || [];
+        renderGuests();
+        renderTabs();
+        break;
       case 'diag': renderDiag(e.data); break;
       case 'typing':
         if ((e.data.conv === 'dm' && active === e.data.fp) || (e.data.conv === 'room' && active === 'room')) {
@@ -906,6 +1178,7 @@
 
   renderTabs();
   openConv('room');
+  loadGuests();
 })();
 </script>
 </body>
