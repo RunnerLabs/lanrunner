@@ -101,14 +101,307 @@
   .l.SEC .lv { color: #f44; }
   #seccount { color: #f44; }
   .off { display: none; }
+
+  /* TRUNNER.NET visual system: electric signal blue, black hardware surfaces,
+     white type, sharp borders, and compact terminal labels. */
+  :root {
+    --signal: #1d00ff;
+    --ink: #05000f;
+    --paper: #fff;
+    --muted: #a9a4c9;
+    --line: rgba(255, 255, 255, .22);
+    --danger: #ff4d68;
+    --ok: #50ff8a;
+    --display: "Arial Black", Impact, "Segoe UI Black", sans-serif;
+    --mono: "Cascadia Mono", Consolas, "Courier New", monospace;
+  }
+  body {
+    font: 12px/1.45 var(--mono);
+    background: var(--signal);
+    color: var(--paper);
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 3px,
+      rgba(5, 0, 15, .08) 4px
+    );
+    z-index: 20;
+  }
+  #wrap {
+    gap: 10px;
+    padding: 12px;
+    grid-template-columns: minmax(220px, .75fr) minmax(420px, 1.6fr) minmax(250px, .85fr);
+    grid-template-rows: auto minmax(0, 1fr) minmax(150px, 25vh);
+  }
+  .panel {
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    color: var(--paper);
+    box-shadow: none;
+  }
+  .bar {
+    min-height: 34px;
+    padding: 8px 11px;
+    background: var(--signal);
+    color: var(--paper);
+    border-bottom: 1px solid var(--paper);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  header {
+    min-height: 82px;
+    padding: 13px 136px 11px 16px;
+    background: var(--ink);
+    color: var(--paper);
+    border: 1px solid var(--ink);
+  }
+  .brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-lockup .prompt {
+    color: var(--signal);
+    font: 20px/1 var(--display);
+  }
+  header h1 {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0;
+    color: var(--paper);
+    font: 22px/1 var(--display);
+    letter-spacing: -.035em;
+  }
+  header h1 span {
+    color: var(--muted);
+    font: 9px/1 var(--mono);
+    letter-spacing: .12em;
+  }
+  .release-tag {
+    padding: 3px 6px;
+    border: 1px solid var(--signal);
+    color: var(--paper);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    white-space: nowrap;
+  }
+  #ident {
+    margin-top: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+  #ident b { color: var(--paper); }
+  #ident i { color: var(--signal); }
+  #nickinput {
+    width: 110px;
+    padding: 3px 5px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--paper);
+  }
+  #fp { border-color: var(--signal); }
+  .btn,
+  .danger-button,
+  #composer button {
+    border: 1px solid currentColor;
+    background: transparent;
+    color: var(--paper);
+    font: 700 10px/1 var(--mono);
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .btn:hover,
+  .btn:focus-visible,
+  #composer button:hover,
+  #composer button:focus-visible {
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+  }
+  .exit-button {
+    top: 18px;
+    right: 16px;
+    padding: 9px 13px;
+    color: var(--paper);
+  }
+  #peerlist {
+    padding: 0;
+    background: var(--ink);
+  }
+  .peer {
+    padding: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .peer:hover { background: var(--signal); }
+  .peer .nick { font-family: var(--display); letter-spacing: -.02em; }
+  .peer .nick .dot { color: var(--muted); }
+  .peer.on .nick .dot { color: var(--ok); }
+  .peer .meta { color: var(--muted); font-family: var(--mono); }
+  .peer .vrf { border-color: currentColor; }
+  .peer .vrf.yes { color: var(--ok); }
+  .peer .vrf.no { color: #ffd45a; }
+  .peer.suspect { background: #2b0715; }
+  .empty { color: var(--muted); font-style: normal; }
+  .chat-command {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 12px;
+    background: var(--signal);
+    border-bottom: 1px solid var(--paper);
+  }
+  .chat-command .eyebrow {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 8px;
+    letter-spacing: .14em;
+  }
+  #active-chat-name {
+    font: 18px/1 var(--display);
+    letter-spacing: -.025em;
+  }
+  .danger-button {
+    padding: 9px 12px;
+    color: var(--paper);
+  }
+  .danger-button:hover,
+  .danger-button:focus-visible {
+    background: var(--danger);
+    color: var(--ink);
+    outline: none;
+  }
+  .danger-button.confirming {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: var(--ink);
+  }
+  #tabs {
+    min-height: 31px;
+    background: var(--ink);
+    border-bottom: 1px solid var(--line);
+  }
+  .tab {
+    padding: 7px 11px;
+    border-right: 1px solid var(--line);
+    color: var(--muted);
+    letter-spacing: .04em;
+  }
+  .tab.active {
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .tab .badge {
+    background: var(--signal);
+    color: var(--paper);
+  }
+  .tab .x { color: inherit; }
+  #msgs { padding: 12px; background: var(--ink); }
+  .m {
+    margin: 0 0 8px;
+    padding: 7px 9px;
+    border-left: 2px solid var(--signal);
+    background: rgba(255, 255, 255, .045);
+  }
+  .m .t { color: var(--muted); font-family: var(--mono); }
+  .m .n { color: #ff8aa0; }
+  .m.self .n { color: #8e80ff; }
+  .m .rcpt { color: var(--ok); }
+  .m.old { opacity: .55; }
+  #typing { color: var(--muted); }
+  #composer {
+    min-height: 46px;
+    border-top: 1px solid var(--line);
+    background: var(--ink);
+  }
+  #composer input {
+    padding: 10px 12px;
+    background: transparent;
+    color: var(--paper);
+    font-family: var(--mono);
+  }
+  #composer input::placeholder { color: var(--muted); }
+  #composer button { min-width: 88px; padding: 0 16px; border-width: 0 0 0 1px; }
+  #infobody {
+    padding: 10px;
+    background: var(--ink);
+    color: var(--paper);
+  }
+  #infobody h3 {
+    color: var(--muted);
+    border-color: var(--line);
+    font-size: 9px;
+    letter-spacing: .12em;
+  }
+  #verdict { padding: 8px; background: transparent !important; }
+  #verdict.ok { border-color: var(--ok); color: var(--ok); }
+  #verdict.warn { border-color: #ffd45a; color: #ffd45a; }
+  #verdict.crit { border-color: var(--danger); color: var(--danger); }
+  #verdict.pending { border-color: var(--muted); color: var(--muted); }
+  #detail, #fixes { color: var(--muted); }
+  table.kv { color: var(--paper); font-family: var(--mono); }
+  table.kv td:first-child { color: var(--muted); }
+  #console { border-color: var(--ink); }
+  #console .bar {
+    background: var(--ink);
+    color: var(--paper);
+    border-bottom: 1px solid var(--signal);
+  }
+  #controls input[type=text] {
+    background: transparent;
+    color: var(--paper);
+    border-color: var(--line);
+  }
+  #controls button {
+    background: transparent;
+    color: var(--paper);
+    border-color: var(--line);
+  }
+  #out { background: var(--ink); color: var(--paper); font-family: var(--mono); }
+  .l { color: var(--muted); }
+  .l .ts { color: #8e80ff; }
+  .l .sr { color: var(--paper); }
+  .l.SYS .lv { color: var(--muted); }
+  .l.NET .lv { color: #8e80ff; }
+  .l.PKT .lv { color: #ffd45a; }
+  .l.CRY { color: #c9c4ff; }
+  .l.CRY .lv { color: #8e80ff; }
+  .l.SEC { color: #ff9aab; background: #25050d; }
+
+  @media (max-width: 900px) {
+    #wrap {
+      grid-template-columns: 190px 1fr;
+      grid-template-rows: auto minmax(0, 1fr) minmax(135px, 23vh);
+    }
+    #info { display: none; }
+    header, #console { grid-column: 1 / 3; }
+    header h1 span { display: none; }
+    #controls .f:nth-of-type(n+4) { display: none; }
+  }
 </style>
 </head>
 <body>
-<div id="wrap">
+<div id="wrap" data-app="lanrunner">
 
   <header>
-    <h1>Lanrunner <span>— local network messaging, offline, end-to-end encrypted</span></h1>
-    <button type="button" class="btn" id="exitapp" title="Stop Lanrunner and release its local ports">Exit Lanrunner</button>
+    <div class="brand-lockup">
+      <span class="prompt">$</span>
+      <h1>LAN RUNNER <span>LOCAL-FIRST ENCRYPTED MESSAGING</span></h1>
+      <span class="release-tag">v0.1.6 BETA</span>
+    </div>
+    <button type="button" class="btn exit-button" id="exitapp" title="Stop Lan Runner and release its local ports">EXIT APP</button>
     <div id="ident">
       <form id="nickform" style="display:inline"><b>you:</b> <input id="nickinput" maxlength="24" autocomplete="off"></form>
       <i>|</i> key <b id="fp" class="mono" title="Your safety number. Read it aloud to a contact to verify them.">—</b>
@@ -118,15 +411,23 @@
       <i>|</i> peers <b id="i-peers">0</b>
       <i>|</i> sessions <b id="i-sess">0</b>
       <i>|</i> ui <b id="i-link">connecting…</b>
+      <i>|</i> history <b>memory only</b>
     </div>
   </header>
 
   <section class="panel" id="peers">
-    <div class="bar"><span>Buddy List</span><span id="peercount">0</span></div>
+    <div class="bar"><span>01 // LOCAL PEERS</span><span id="peercount">0</span></div>
     <div id="peerlist"><div class="empty">listening for peers…</div></div>
   </section>
 
   <section class="panel" id="chat">
+    <div class="chat-command">
+      <div>
+        <span class="eyebrow">02 // ACTIVE CHANNEL</span>
+        <strong id="active-chat-name">LAN ROOM</strong>
+      </div>
+      <button type="button" class="danger-button" id="clearchat" title="Clear this conversation without changing peers, identity, trust, or network state">CLEAR ROOM</button>
+    </div>
     <div id="tabs"></div>
     <div id="msgs"></div>
     <div id="typing"></div>
@@ -137,7 +438,7 @@
   </section>
 
   <section class="panel" id="info">
-    <div class="bar"><span>Diagnostics</span><span id="cipher">AES-256-GCM</span></div>
+    <div class="bar"><span>03 // DIAGNOSTICS</span><span id="cipher">AES-256-GCM</span></div>
     <div id="infobody">
       <div id="verdict" class="pending">Running startup checks…</div>
       <div id="detail"></div>
@@ -151,7 +452,7 @@
 
   <section class="panel" id="console">
     <div class="bar">
-      <span>Console &mdash; <span id="seccount">0 SEC</span></span>
+      <span>04 // SIGNAL LOG &mdash; <span id="seccount">0 SEC</span></span>
       <span id="controls">
         <label><input type="checkbox" class="f" value="SYS" checked> SYS</label>
         <label><input type="checkbox" class="f" value="NET" checked> NET</label>
@@ -175,7 +476,7 @@
   var sec = 0, me = null, peers = [], selected = null;
 
   // conversation state: id -> {id, name, msgs:[], unread, loaded}
-  var convs = { room: { id: 'room', name: 'LAN Room', msgs: [], unread: 0, loaded: false } };
+  var convs = { room: { id: 'room', name: 'LAN Room', msgs: [], unread: 0, loaded: false, loadToken: 0 } };
   var active = 'room';
 
   // ---- console -----------------------------------------------------------
@@ -220,6 +521,66 @@
     for (var i = 0; i < peers.length; i++) if (peers[i].fp === id) return peers[i].nick;
     return id.substring(0, 8);
   }
+  function clearButtonLabel(id) {
+    return id === 'room' ? 'CLEAR ROOM' : 'CLEAR MESSAGES';
+  }
+  function applyChatCleared(id) {
+    if (id === 'room') {
+      if (!convs.room) convs.room = { id: 'room', name: 'LAN Room', msgs: [], unread: 0, loaded: true, loadToken: 0 };
+      convs.room.msgs = [];
+      convs.room.unread = 0;
+      convs.room.loaded = true;
+      convs.room.loadToken = (convs.room.loadToken || 0) + 1;
+    } else {
+      delete convs[id];
+      if (active === id) active = 'room';
+    }
+    renderTabs();
+    renderMsgs();
+  }
+  function clearConversation(id) {
+    var button = $('clearchat');
+    button.disabled = true;
+    button.textContent = 'CLEARING…';
+    fetch('/clear-messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conv: id })
+    })
+      .then(function (response) {
+        if (!response.ok) throw new Error('clear messages request failed');
+      })
+      .catch(function () {
+        window.alert('Lan Runner could not clear these messages. The transcript has not been cleared.');
+      })
+      .then(function () {
+        button.disabled = false;
+        button.textContent = clearButtonLabel(active);
+      });
+  }
+  var pendingClear = null;
+  var pendingClearTimer = null;
+  function resetClearConfirmation() {
+    clearTimeout(pendingClearTimer);
+    pendingClear = null;
+    var button = $('clearchat');
+    button.textContent = clearButtonLabel(active);
+    button.classList.remove('confirming');
+  }
+  function requestClearConversation(id) {
+    var button = $('clearchat');
+    if (pendingClear !== id) {
+      pendingClear = id;
+      button.textContent = 'CONFIRM CLEAR';
+      button.classList.add('confirming');
+      clearTimeout(pendingClearTimer);
+      pendingClearTimer = setTimeout(resetClearConfirmation, 15000);
+      return;
+    }
+    clearTimeout(pendingClearTimer);
+    pendingClear = null;
+    button.classList.remove('confirming');
+    clearConversation(id);
+  }
   function renderTabs() {
     tabsEl.innerHTML = '';
     Object.keys(convs).forEach(function (id) {
@@ -237,26 +598,31 @@
         var x = document.createElement('span'); x.className = 'x'; x.textContent = '×';
         x.addEventListener('click', function (ev) {
           ev.stopPropagation();
-          delete convs[id];
-          if (active === id) active = 'room';
-          renderTabs(); renderMsgs();
+          if (window.confirm('Close ' + convName(id) + ' and clear its messages from this local session?')) {
+            clearConversation(id);
+          }
         });
         t.appendChild(x);
       }
       t.addEventListener('click', function () { openConv(id); });
       tabsEl.appendChild(t);
     });
+    $('active-chat-name').textContent = convName(active).toUpperCase();
+    if (pendingClear !== active) resetClearConfirmation();
   }
   function openConv(id) {
-    if (!convs[id]) convs[id] = { id: id, name: convName(id), msgs: [], unread: 0, loaded: false };
+    if (!convs[id]) convs[id] = { id: id, name: convName(id), msgs: [], unread: 0, loaded: false, loadToken: 0 };
     active = id;
     convs[id].unread = 0;
     renderTabs();
     if (!convs[id].loaded) {
       convs[id].loaded = true;
+      convs[id].loadToken = (convs[id].loadToken || 0) + 1;
+      var loadToken = convs[id].loadToken;
       fetch('/history?conv=' + encodeURIComponent(id) + '&limit=200')
         .then(function (r) { return r.json(); })
         .then(function (j) {
+          if (!convs[id] || convs[id].loadToken !== loadToken) return;
           var existing = convs[id].msgs;
           var loaded = (j.messages || []).map(function (m) { m.old = true; return m; });
           convs[id].msgs = loaded.concat(existing);
@@ -290,7 +656,7 @@
   }
   function addMsg(m) {
     var id = m.conv || 'room';
-    if (!convs[id]) convs[id] = { id: id, name: convName(id), msgs: [], unread: 0, loaded: false };
+    if (!convs[id]) convs[id] = { id: id, name: convName(id), msgs: [], unread: 0, loaded: true, loadToken: 0 };
     convs[id].msgs.push(m);
     if (id === active) {
       msgsEl.appendChild(msgNode(m));
@@ -473,6 +839,7 @@
         }
         break;
       case 'presence': break;
+      case 'chat-cleared': applyChatCleared(e.data.conv); break;
       case 'shutdown': showStopped(e.data && e.data.reason); break;
       case 'identity':
         me = e.data;
@@ -494,6 +861,10 @@
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ conv: active, body: v })
     });
+  });
+
+  $('clearchat').addEventListener('click', function () {
+    requestClearConversation(active);
   });
 
   var lastTyped = 0;

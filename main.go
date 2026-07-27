@@ -59,7 +59,7 @@ var (
 	flagUI        = flag.Int("ui", 8080, "loopback UI port")
 	flagTCP       = flag.Int("tcp", 47101, "TCP messaging port (0 chooses an automatic port)")
 	flagDisco     = flag.Int("disco", 47100, "UDP discovery port — must match on every device")
-	flagData      = flag.String("data", "", "data directory for keys, trust store and history")
+	flagData      = flag.String("data", "", "data directory for identity and trust settings (chat history is memory-only)")
 	flagNoMc      = flag.Bool("no-multicast", false, "disable the multicast discovery channel")
 	flagSeeds     stringList
 	flagVerbose   = flag.Bool("v", false, "log every heartbeat frame too")

@@ -13,8 +13,9 @@ dist/
 # Private key material and local state. NEVER commit these.
 #
 # identity.json holds your Ed25519 seed and X25519 private key. Anyone with
-# that file can impersonate you on the network. known_peers.json and history/
-# leak who you talk to and what you said.
+# that file can impersonate you on the network. known_peers.json reveals who
+# you have trusted. Current chat stays memory-only; history/ is retained here
+# only to exclude legacy transcript files from older beta builds.
 # ---------------------------------------------------------------------------
 identity.json
 known_peers.json

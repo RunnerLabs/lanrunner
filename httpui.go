@@ -25,6 +25,7 @@ func (a *App) routes(mux *http.ServeMux) {
 	mux.HandleFunc("/nick", a.handleNick)
 	mux.HandleFunc("/verify", a.handleVerify)
 	mux.HandleFunc("/history", a.handleHistory)
+	mux.HandleFunc("/clear-messages", a.handleClearMessages)
 	mux.HandleFunc("/diag", a.handleDiag)
 	mux.HandleFunc("/exit", a.handleExit)
 }
@@ -253,6 +254,49 @@ func (a *App) handleHistory(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{"conv": conv, "messages": out})
+}
+
+func validConversationID(conv string) bool {
+	if conv == "room" {
+		return true
+	}
+	if len(conv) < 8 || len(conv) > 128 {
+		return false
+	}
+	for _, r := range conv {
+		if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f')) {
+			return false
+		}
+	}
+	return true
+}
+
+func (a *App) handleClearMessages(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST only", http.StatusMethodNotAllowed)
+		return
+	}
+	var in struct {
+		Conv string `json:"conv"`
+	}
+	if err := decodeBody(r, &in); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	if in.Conv == "" {
+		in.Conv = "room"
+	}
+	if !validConversationID(in.Conv) {
+		http.Error(w, "invalid conversation", http.StatusBadRequest)
+		return
+	}
+
+	a.touchActivity()
+	a.hist.Delete(in.Conv)
+	a.emit("chat-cleared", map[string]string{"conv": in.Conv})
+	a.logf("SYS", "local", "cleared messages for %s — transcript erased from this local session", safeName(in.Conv))
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "conv": in.Conv})
 }
 
 func (a *App) handleDiag(w http.ResponseWriter, r *http.Request) {

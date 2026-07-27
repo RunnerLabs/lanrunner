@@ -1,17 +1,14 @@
 package main
 
 import (
-	"bufio"
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 )
 
-// HistEntry is one line of an append-only conversation log. Delivery receipts
-// are appended as their own records rather than rewriting history in place,
-// which keeps the file append-only and crash-safe.
+// HistEntry is retained only in process memory. Chat transcripts are deliberately
+// ephemeral: they are never written to the Lan Runner data directory.
 type HistEntry struct {
 	Kind      string `json:"k,omitempty"` // "" = message, "ack" = delivery receipt
 	TS        int64  `json:"ts"`
@@ -25,17 +22,20 @@ type HistEntry struct {
 }
 
 type History struct {
-	dir   string
-	mu    sync.Mutex
-	files map[string]*os.File
+	dir     string
+	mu      sync.Mutex
+	entries map[string][]HistEntry
 }
 
 func OpenHistory(dir string) *History {
 	_ = os.MkdirAll(dir, 0o700)
-	return &History{dir: dir, files: map[string]*os.File{}}
+	h := &History{dir: dir, entries: map[string][]HistEntry{}}
+	h.removeLegacyFiles()
+	return h
 }
 
-// safeName keeps conversation ids from escaping the history directory.
+// safeName keeps conversation ids stable and prevents path traversal while
+// removing transcript files created by releases before ephemeral history.
 func safeName(conv string) string {
 	if conv == "room" {
 		return "room"
@@ -56,31 +56,24 @@ func safeName(conv string) string {
 	return s
 }
 
-func (h *History) handle(conv string) *os.File {
-	name := safeName(conv)
-	if f, ok := h.files[name]; ok {
-		return f
-	}
-	f, err := os.OpenFile(filepath.Join(h.dir, name+".jsonl"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+func (h *History) removeLegacyFiles() {
+	entries, err := os.ReadDir(h.dir)
 	if err != nil {
-		return nil
+		return
 	}
-	h.files[name] = f
-	return f
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".jsonl") {
+			continue
+		}
+		_ = os.Remove(filepath.Join(h.dir, entry.Name()))
+	}
 }
 
 func (h *History) Append(e HistEntry) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	f := h.handle(e.Conv)
-	if f == nil {
-		return
-	}
-	b, err := json.Marshal(e)
-	if err != nil {
-		return
-	}
-	_, _ = f.Write(append(b, '\n'))
+	name := safeName(e.Conv)
+	h.entries[name] = append(h.entries[name], e)
 }
 
 func (h *History) MarkDelivered(conv, mid string) {
@@ -90,70 +83,55 @@ func (h *History) MarkDelivered(conv, mid string) {
 	h.Append(HistEntry{Kind: "ack", Conv: conv, MID: mid, TS: nowMS()})
 }
 
-// Load returns the last `limit` messages of a conversation with delivery
-// receipts already folded in.
+// Load returns the last limit messages from this process only, with delivery
+// receipts folded in. Relaunching Lan Runner starts with an empty transcript.
 func (h *History) Load(conv string, limit int) []HistEntry {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	path := filepath.Join(h.dir, safeName(conv)+".jsonl")
-	f, err := os.Open(path)
-	if err != nil {
-		return nil
-	}
-	defer f.Close()
-
-	var msgs []HistEntry
+	stored := h.entries[safeName(conv)]
+	msgs := make([]HistEntry, 0, len(stored))
 	acks := map[string]int{}
-
-	sc := bufio.NewScanner(f)
-	sc.Buffer(make([]byte, 0, 64<<10), 1<<20)
-	for sc.Scan() {
-		line := strings.TrimSpace(sc.Text())
-		if line == "" {
+	for _, entry := range stored {
+		if entry.Kind == "ack" {
+			acks[entry.MID]++
 			continue
 		}
-		var e HistEntry
-		if json.Unmarshal([]byte(line), &e) != nil {
-			continue
-		}
-		if e.Kind == "ack" {
-			acks[e.MID]++
-			continue
-		}
-		msgs = append(msgs, e)
+		msgs = append(msgs, entry)
 	}
 
 	if limit > 0 && len(msgs) > limit {
 		msgs = msgs[len(msgs)-limit:]
 	}
-	for i := range msgs {
-		msgs[i].Delivered = acks[msgs[i].MID]
-	}
-	return msgs
-}
-
-// Conversations lists conversation ids that have stored history.
-func (h *History) Conversations() []string {
-	entries, err := os.ReadDir(h.dir)
-	if err != nil {
-		return nil
-	}
-	var out []string
-	for _, e := range entries {
-		n := e.Name()
-		if strings.HasSuffix(n, ".jsonl") {
-			out = append(out, strings.TrimSuffix(n, ".jsonl"))
-		}
+	out := append([]HistEntry(nil), msgs...)
+	for i := range out {
+		out[i].Delivered = acks[out[i].MID]
 	}
 	return out
 }
 
-func (h *History) Close() {
+// Delete permanently removes one conversation from the current local session.
+func (h *History) Delete(conv string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	for _, f := range h.files {
-		_ = f.Close()
+	delete(h.entries, safeName(conv))
+}
+
+// Conversations lists conversations held in memory during this process.
+func (h *History) Conversations() []string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	out := make([]string, 0, len(h.entries))
+	for conv := range h.entries {
+		out = append(out, conv)
 	}
-	h.files = map[string]*os.File{}
+	return out
+}
+
+// Close erases every in-memory transcript and removes any legacy disk history.
+func (h *History) Close() {
+	h.mu.Lock()
+	h.entries = map[string][]HistEntry{}
+	h.mu.Unlock()
+	h.removeLegacyFiles()
 }

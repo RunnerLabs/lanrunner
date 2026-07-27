@@ -48,9 +48,10 @@ GOOS=linux   GOARCH=amd64 go build -trimpath -o lanrunner-linux .
 Lanrunner opens <http://127.0.0.1:8080> in your default browser automatically.
 Start it on another device and the two find each other in about three seconds.
 Launching Lanrunner again opens the existing interface instead of starting a
-second background copy. Use **Exit Lanrunner** in the interface to stop the
-background process and release its ports. Lanrunner also shuts itself down
-after 30 minutes without chat activity.
+second background copy. Use **CLEAR ROOM** or **CLEAR MESSAGES** to erase the
+active transcript from the current local session. Use **EXIT APP** to stop the
+background process, erase every in-memory transcript, and release its ports.
+Lanrunner also shuts itself down after 30 minutes without chat activity.
 
 ### Native Linux
 
@@ -96,7 +97,7 @@ New-NetFirewallRule -DisplayName "Lanrunner Messaging" -Direction Inbound -Proto
 | `-tcp` | `47101` | TCP messaging port; `0` chooses an automatic port |
 | `-disco` | `47100` | UDP discovery port — must match on every device |
 | `-peer` | — | seed a peer by address, repeatable: `-peer 192.168.1.42` |
-| `-data` | OS config dir | where keys, trust store and history live |
+| `-data` | OS config dir | where identity and trust settings live; chat history stays in memory |
 | `-no-browser` | off | do not open the local web UI automatically |
 | `-idle` | `30m` | shut down after this much inactivity; `0` disables it |
 | `-no-multicast` | off | broadcast only |
@@ -195,18 +196,22 @@ Everything also goes to stdout: `./lanrunner -nick alice | tee run.log`.
 
 ## Storage
 
-Everything lives in the data directory (`-data`, default your OS config dir):
+Only long-lived identity and trust settings live in the data directory
+(`-data`, default your OS config dir):
 
 ```
 identity.json      Ed25519 seed + X25519 private key, mode 0600
 known_peers.json   pinned fingerprints, nicknames, verification state
-history/room.jsonl        append-only conversation log
-history/<fingerprint>.jsonl
 ```
 
-History is append-only, including delivery receipts, so a crash can't corrupt
-it. Note it is stored in **plaintext** — the encryption protects the wire, not
-the disk. If that matters, put the data directory on an encrypted volume.
+Chat transcripts are **memory-only**. They are not written to disk, are erased
+when Lan Runner exits, and can be erased during a run with **CLEAR ROOM** or
+**CLEAR MESSAGES**. Closing and reopening the browser UI during the same running
+app session does not restore data from disk; it only shows messages still held
+in that process. On startup, this release also deletes plaintext
+`history/*.jsonl` transcript files left by earlier beta builds. Identity keys
+and verified-peer fingerprints remain available so trusted devices do not look
+new after every launch.
 
 ## Remaining limits, honestly
 

@@ -1,4 +1,4 @@
-LANRUNNER 0.1.5-BETA — NATIVE LINUX QUICK START
+LANRUNNER 0.1.6-BETA — NATIVE LINUX QUICK START
 
 This package runs directly on Linux.
 
@@ -36,5 +36,7 @@ or, when XDG_STATE_HOME is unset:
   ~/.local/state/lanrunner/native-launch.log
 
 Lanrunner data is stored under your Linux user configuration directory,
-normally ~/.config/lanrunner. Use Exit Lanrunner in the browser interface to
-stop the background process and release its ports.
+normally ~/.config/lanrunner. Chat transcripts stay in memory only and are
+erased when Lan Runner exits. Use CLEAR ROOM or CLEAR MESSAGES to erase the
+active transcript immediately, or EXIT APP to erase all transcripts, stop the
+background process, and release its ports.

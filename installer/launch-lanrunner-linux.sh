@@ -69,5 +69,5 @@ else
 fi
 
 printf '%s\n' "Lanrunner is running natively (PID $APP_PID)."
-printf '%s\n' "Use Exit Lanrunner in the page to stop it."
+printf '%s\n' "Use EXIT APP in the page to stop it."
 printf '%s\n' "Launch log: $LOG_FILE"

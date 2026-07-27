@@ -3,8 +3,10 @@
 ## Before you start: don't commit your keys
 
 `identity.json` holds your Ed25519 seed and X25519 private key. Anyone who has
-that file can impersonate you on the network. `known_peers.json` and `history/`
-reveal who you talk to and what you said.
+that file can impersonate you on the network. `known_peers.json` reveals peer
+identities. Current chat transcripts are memory-only, but a `history/` folder
+from an older beta may still contain plaintext messages until the new build is
+launched once.
 
 The included `.gitignore` already excludes all of them. Just don't override it,
 and don't use `git add -f` on those names.
@@ -18,7 +20,8 @@ cd C:\Users\YourName\lanrunner
 git status --short
 ```
 
-If `identity.json` or `history/` appear in that list, stop and tell me.
+If `identity.json`, `known_peers.json`, or `history/` appear in that list, stop
+and tell me.
 
 ---
 
