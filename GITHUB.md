@@ -71,7 +71,7 @@ Create the empty **private** repo at <https://github.com/new> (no README, no
 .gitignore, no license), then:
 
 ```powershell
-git remote add origin https://github.com/trunninthisshit/lanrunner.git
+git remote add origin https://github.com/RunnerLabs/lanrunner.git
 git push -u origin main
 ```
 
@@ -96,7 +96,7 @@ owner only when you need to push changes or publish a release.
 ## Cloning it on the other machine
 
 ```powershell
-git clone https://github.com/trunninthisshit/lanrunner.git
+git clone https://github.com/RunnerLabs/lanrunner.git
 cd lanrunner
 go build -o lanrunner.exe .
 ```
