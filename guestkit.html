@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lanrunner Guest Terminal</title>
+<style nonce="__LANRUNNER_NONCE__">
+  :root {
+    --bg:    #05070a;
+    --panel: #080d12;
+    --fg:    #35ff8a;
+    --dim:   #1b7a45;
+    --dimmer:#12492c;
+    --you:   #ffcc55;
+    --host:  #6fe3ff;
+    --err:   #ff5f56;
+    --warn:  #ffb000;
+    --rule:  #12331f;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    text-shadow: 0 0 6px rgba(53,255,138,.35);
+    overflow: hidden;
+  }
+  /* CRT dressing — purely decorative, never intercepts input */
+  #scan {
+    position: fixed; inset: 0; pointer-events: none; z-index: 9;
+    background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.28) 2px 4px);
+    mix-blend-mode: multiply;
+  }
+  #vig {
+    position: fixed; inset: 0; pointer-events: none; z-index: 8;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%);
+  }
+
+  #shell { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
+
+  header {
+    flex: 0 0 auto; border-bottom: 1px solid var(--rule);
+    background: var(--panel); padding: 8px 12px;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+  .row-tight { margin-top: 3px; }
+  h1 { margin: 0; font-size: 14px; letter-spacing: 3px; font-weight: 700; }
+  h1 small { letter-spacing: 0; font-weight: 400; color: var(--dim); margin-left: 8px; }
+  .kv { color: var(--dim); font-size: 12px; }
+  .kv b { color: var(--fg); font-weight: 400; }
+  .badge { border: 1px solid currentColor; padding: 0 6px; font-size: 11px; letter-spacing: 1px; }
+  .badge.ok   { color: var(--fg); }
+  .badge.warn { color: var(--warn); }
+  .badge.err  { color: var(--err); }
+
+  #banner {
+    display: none; background: #2a0b0b; color: var(--err); border-bottom: 1px solid var(--err);
+    padding: 6px 12px; font-size: 12px; letter-spacing: 1px; text-shadow: none;
+  }
+  #banner.show { display: block; }
+
+  #log { flex: 1 1 auto; overflow-y: auto; padding: 10px 12px 4px; }
+  .l { white-space: pre-wrap; word-break: break-word; margin: 0 0 2px; }
+  .l .ts { color: var(--dimmer); margin-right: 8px; }
+  .l.sys  { color: var(--dim); }
+  .l.you  { color: var(--you); text-shadow: 0 0 6px rgba(255,204,85,.3); }
+  .l.host { color: var(--host); text-shadow: 0 0 6px rgba(111,227,255,.3); }
+  .l.err  { color: var(--err); text-shadow: none; }
+  .l.warn { color: var(--warn); text-shadow: none; }
+  .l .who { font-weight: 700; }
+  .l .rcpt { color: var(--dim); margin-left: 8px; font-size: 11px; }
+  .l.old { opacity: .5; }
+
+  #typing { flex: 0 0 auto; height: 18px; padding: 0 12px; color: var(--dim); font-size: 12px; }
+
+  form#prompt { flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+                border-top: 1px solid var(--rule); background: var(--panel); padding: 8px 12px; }
+  form#prompt .sig { color: var(--dim); }
+  form#prompt input {
+    flex: 1 1 auto; background: transparent; border: 0; outline: none;
+    color: var(--fg); font: inherit; text-shadow: inherit; caret-color: var(--fg);
+  }
+  form#prompt input::placeholder { color: var(--dimmer); }
+  form#prompt button {
+    background: transparent; border: 1px solid var(--dim); color: var(--fg);
+    font: inherit; font-size: 12px; letter-spacing: 1px; padding: 3px 12px; cursor: pointer;
+  }
+  form#prompt button:hover:not(:disabled) { border-color: var(--fg); }
+  form#prompt button:disabled { opacity: .4; cursor: not-allowed; }
+
+  footer { flex: 0 0 auto; border-top: 1px solid var(--rule); background: var(--panel);
+           padding: 5px 12px; font-size: 11px; color: var(--dim); }
+  #stats { margin-left: 14px; }
+  footer input {
+    background: #040a06; border: 1px solid var(--rule); color: var(--fg);
+    font: inherit; font-size: 11px; padding: 1px 5px; width: 130px; text-shadow: none;
+  }
+  footer button {
+    background: transparent; border: 1px solid var(--rule); color: var(--dim);
+    font: inherit; font-size: 11px; padding: 1px 8px; cursor: pointer;
+  }
+  footer button:hover { color: var(--fg); border-color: var(--dim); }
+
+  /* join gate */
+  #gate { position: fixed; inset: 0; z-index: 20; background: var(--bg);
+          display: grid; place-items: center; padding: 20px; }
+  #gate .box { width: min(560px, 100%); border: 1px solid var(--dim); padding: 22px 24px; background: var(--panel); }
+  #gate h2 { margin: 0 0 4px; font-size: 15px; letter-spacing: 3px; }
+  #gate p  { margin: 4px 0; color: var(--dim); font-size: 12.5px; }
+  #gate label { display: block; margin: 16px 0 5px; font-size: 12px; color: var(--dim); letter-spacing: 1px; }
+  #gate input {
+    width: 100%; background: #040a06; border: 1px solid var(--dim); color: var(--fg);
+    font: inherit; padding: 7px 9px; outline: none; text-shadow: inherit;
+  }
+  #gate input:focus { border-color: var(--fg); }
+  #gate button {
+    margin-top: 16px; background: transparent; border: 1px solid var(--fg); color: var(--fg);
+    font: inherit; letter-spacing: 2px; padding: 7px 20px; cursor: pointer;
+  }
+  #gate button:hover { background: rgba(53,255,138,.08); }
+  #gate .note { margin-top: 14px; font-size: 11.5px; color: var(--dimmer); line-height: 1.6; }
+  #gateerr { color: var(--err); text-shadow: none; min-height: 18px; margin-top: 10px; font-size: 12px; }
+
+  .cursor { display: inline-block; width: 8px; height: 14px; background: var(--fg);
+            vertical-align: -2px; animation: blink 1.1s step-end infinite; }
+  @keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+</style>
+</head>
+<body>
+<div id="scan"></div>
+<div id="vig"></div>
+
+<div id="shell">
+  <header>
+    <div class="row">
+      <h1>LANRUNNER<small>guest terminal</small></h1>
+      <span class="kv">host <b id="h-host">—</b></span>
+      <span class="kv">addr <b id="h-addr">—</b></span>
+      <span class="kv">link <b id="h-link">offline</b></span>
+      <span class="badge warn" id="h-cipher">NO SESSION</span>
+    </div>
+    <div class="row row-tight">
+      <span class="kv">their key <b id="h-safety">—</b></span>
+      <span class="kv">session <b id="h-sid">—</b></span>
+    </div>
+  </header>
+
+  <div id="banner"></div>
+  <div id="log"></div>
+  <div id="typing"></div>
+
+  <form id="prompt" autocomplete="off">
+    <span class="sig">&gt;</span>
+    <input id="input" placeholder="connecting…" maxlength="2048" disabled>
+    <button type="submit" id="sendbtn" disabled>SEND</button>
+  </form>
+
+  <footer>
+    <span>host address</span>
+    <input id="hostbox" spellcheck="false">
+    <button type="button" id="reconnect">RECONNECT</button>
+    <span id="stats"></span>
+  </footer>
+</div>
+
+<div id="gate">
+  <div class="box">
+    <h2>LANRUNNER GUEST TERMINAL</h2>
+    <p id="g-inviteline">You were invited to a private conversation on this local network.</p>
+    <p id="g-hostline"></p>
+    <label for="nick">YOUR NAME</label>
+    <input id="nick" maxlength="24" spellcheck="false" placeholder="e.g. sam">
+    <div id="gateerr"></div>
+    <button type="button" id="join">CONNECT</button>
+    <div class="note">
+      Nothing is installed and nothing leaves your local network. This page talks
+      straight to the computer that generated this folder.<br>
+      This folder holds a private invite token &mdash; treat it like a password.
+    </div>
+  </div>
+</div>
+
+<script nonce="__LANRUNNER_NONCE__">
+(function () {
+  "use strict";
+
+  var CFG = "__LANRUNNER_CONNECT__";
+
+  var $ = function (id) { return document.getElementById(id); };
+  var logEl = $('log');
+  var enc = new TextEncoder(), dec = new TextDecoder();
+
+  var state = {
+    base: null,        // "http://ip:port" that answered
+    sid: null,
+    h2g: null, g2h: null,
+    encrypted: false,
+    nick: '',
+    es: null,
+    connected: false,
+    retry: 0,
+    tx: 0, rx: 0,
+    seq: 0,
+    closing: false
+  };
+
+  // ---- log ---------------------------------------------------------------
+  function clock() {
+    var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+  function line(cls, who, text, opts) {
+    opts = opts || {};
+    var row = document.createElement('div');
+    row.className = 'l ' + cls + (opts.old ? ' old' : '');
+    if (opts.mid) row.dataset.mid = opts.mid;
+
+    var t = document.createElement('span');
+    t.className = 'ts';
+    t.textContent = opts.ts || clock();
+    row.appendChild(t);
+
+    if (who) {
+      var w = document.createElement('span');
+      w.className = 'who';
+      w.textContent = who + ' ';
+      row.appendChild(w);
+    }
+    row.appendChild(document.createTextNode(text));
+
+    if (opts.receipt) {
+      var r = document.createElement('span');
+      r.className = 'rcpt';
+      row.appendChild(r);
+    }
+    var atBottom = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 60;
+    logEl.appendChild(row);
+    while (logEl.childNodes.length > 800) logEl.removeChild(logEl.firstChild);
+    if (atBottom || opts.force) logEl.scrollTop = logEl.scrollHeight;
+    return row;
+  }
+  var sys  = function (t) { return line('sys', '', t); };
+  var warn = function (t) { return line('warn', '', t); };
+  var fail = function (t) { return line('err', '', t); };
+
+  // ---- header ------------------------------------------------------------
+  function setLink(text) { $('h-link').textContent = text; }
+  function setCipher(text, cls) {
+    var b = $('h-cipher');
+    b.textContent = text;
+    b.className = 'badge ' + cls;
+  }
+  function setBanner(text) {
+    var b = $('banner');
+    if (!text) { b.className = ''; b.textContent = ''; return; }
+    b.className = 'show';
+    b.textContent = text;
+  }
+  function stats() {
+    $('stats').textContent = 'sent ' + state.tx + '  received ' + state.rx;
+  }
+
+  // ---- crypto ------------------------------------------------------------
+  var subtle = (window.crypto && window.crypto.subtle) || null;
+
+  function b64enc(buf) {
+    var b = new Uint8Array(buf), s = '';
+    for (var i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s);
+  }
+  function b64dec(str) {
+    var s = atob(str), b = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+    return b;
+  }
+
+  // Derives the two directional AES-256-GCM keys. The invite token is the HKDF
+  // salt, which is what ties the agreed key to this specific folder.
+  function deriveKeys(sharedBits, sid) {
+    var base = 'lanrunner-guest-v1|' + CFG.id + '|' + sid;
+    return subtle.importKey('raw', sharedBits, 'HKDF', false, ['deriveBits'])
+      .then(function (ikm) {
+        var one = function (info) {
+          return subtle.deriveBits({
+            name: 'HKDF', hash: 'SHA-256',
+            salt: enc.encode(CFG.token), info: enc.encode(base + info)
+          }, ikm, 256).then(function (bits) {
+            return subtle.importKey('raw', bits, 'AES-GCM', false, ['encrypt', 'decrypt']);
+          });
+        };
+        return Promise.all([one('|h2g'), one('|g2h')]);
+      });
+  }
+
+  // Every outbound frame carries a counter inside the sealed payload. The host
+  // keeps a sliding window over it, so a captured frame cannot be sent twice.
+  function seal(obj) {
+    state.seq += 1;
+    obj.seq = state.seq;
+    var pt = enc.encode(JSON.stringify(obj));
+    if (!state.encrypted) return Promise.resolve({ p: obj });
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    return subtle.encrypt({ name: 'AES-GCM', iv: iv }, state.g2h, pt).then(function (ct) {
+      var out = new Uint8Array(12 + ct.byteLength);
+      out.set(iv, 0);
+      out.set(new Uint8Array(ct), 12);
+      return { f: b64enc(out) };
+    });
+  }
+
+  function unseal(frame) {
+    if (frame.p !== undefined) return Promise.resolve(frame.p);
+    var raw = b64dec(frame.f);
+    return subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) }, state.h2g, raw.slice(12))
+      .then(function (pt) { return JSON.parse(dec.decode(pt)); });
+  }
+
+  // ---- transport ---------------------------------------------------------
+  function withTimeout(promise, ms) {
+    return new Promise(function (resolve, reject) {
+      var done = false;
+      var timer = setTimeout(function () { if (!done) { done = true; reject(new Error('timeout')); } }, ms);
+      promise.then(function (v) { if (!done) { done = true; clearTimeout(timer); resolve(v); } },
+                   function (e) { if (!done) { done = true; clearTimeout(timer); reject(e); } });
+    });
+  }
+
+  function post(path, body) {
+    return fetch(state.base + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  }
+
+  // probe walks the candidate addresses baked into this kit, plus whatever the
+  // guest typed in the footer, and keeps the first one that answers.
+  function probe() {
+    var list = [];
+    // Served from the host itself? Then its own origin is the right answer and
+    // the only one guaranteed not to trip mixed-content or scheme mismatches.
+    if (location.protocol === 'https:' || location.protocol === 'http:') {
+      list.push(location.origin);
+    }
+    var manual = $('hostbox').value.trim();
+    if (manual && list.indexOf(manual) === -1) list.push(manual);
+    (CFG.hosts || []).forEach(function (h) { if (list.indexOf(h) === -1) list.push(h); });
+
+    var i = 0;
+    function next() {
+      if (i >= list.length) return Promise.reject(new Error('no address answered'));
+      var host = list[i++];
+      var base = /^https?:\/\//.test(host) ? host.replace(/\/+$/, '')
+                                           : 'http://' + host + ':' + CFG.port;
+      sys('probing ' + base + ' …');
+      // Report what this browser can do, so the operator's log can tell a
+      // missing Web Crypto apart from an unreachable host.
+      var caps = '?sc=' + (window.isSecureContext ? 'yes' : 'no') +
+                 '&cs=' + (window.crypto && window.crypto.subtle ? 'yes' : 'no');
+      return withTimeout(fetch(base + '/g/ping' + caps, { cache: 'no-store' }), 2500)
+        .then(function (r) {
+          if (!r.ok) throw new Error('http ' + r.status);
+          return r.json();
+        })
+        .then(function () { return base; })
+        .catch(function () { return next(); });
+    }
+    return next();
+  }
+
+  function hello() {
+    var payload = { v: CFG.v, id: CFG.id, token: CFG.token, nick: state.nick, xk: '' };
+    var keyStep;
+
+    if (subtle) {
+      keyStep = subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits'])
+        .then(function (pair) {
+          return subtle.exportKey('raw', pair.publicKey).then(function (raw) {
+            payload.xk = b64enc(raw);
+            return pair.privateKey;
+          });
+        });
+    } else {
+      keyStep = Promise.resolve(null);
+      warn('this browser exposes no Web Crypto, so no key exchange is possible');
+    }
+
+    return keyStep.then(function (priv) {
+      sys('sending invite token and session key …');
+      return withTimeout(post('/g/hello', payload), 8000).then(function (r) {
+        return r.json().then(function (j) {
+          if (!r.ok) throw new Error(j.error || ('http ' + r.status));
+          return j;
+        });
+      }).then(function (j) {
+        state.sid = j.sid;
+        state.seq = 0; // the host opens a fresh anti-replay window per session
+        $('h-sid').textContent = j.sid;
+        $('h-host').textContent = j.host || '—';
+        $('h-safety').textContent = j.safety || '—';
+
+        if (!j.enc || !j.xk || !priv) {
+          state.encrypted = false;
+          setCipher('UNENCRYPTED', 'err');
+          setBanner('UNENCRYPTED SESSION — anyone on this network can read these messages.');
+          warn('session is NOT encrypted');
+          return;
+        }
+        return subtle.importKey('raw', b64dec(j.xk), { name: 'ECDH', namedCurve: 'P-256' }, false, [])
+          .then(function (theirs) {
+            return subtle.deriveBits({ name: 'ECDH', public: theirs }, priv, 256);
+          })
+          .then(function (bits) { return deriveKeys(bits, j.sid); })
+          .then(function (keys) {
+            state.h2g = keys[0];
+            state.g2h = keys[1];
+            state.encrypted = true;
+            setCipher('AES-256-GCM', 'ok');
+            setBanner('');
+            sys('P-256 ECDH complete — channel sealed with AES-256-GCM');
+          });
+      });
+    });
+  }
+
+  function openStream() {
+    if (state.es) { try { state.es.close(); } catch (e) {} }
+    var url = state.base + '/g/events?id=' + encodeURIComponent(CFG.id) +
+              '&sid=' + encodeURIComponent(state.sid);
+    var es = new EventSource(url);
+    state.es = es;
+
+    es.onopen = function () {
+      state.connected = true;
+      state.retry = 0;
+      setLink('up');
+      $('input').disabled = false;
+      $('sendbtn').disabled = false;
+      $('input').placeholder = 'type a message and press enter';
+      $('input').focus();
+    };
+    es.onerror = function () {
+      if (state.closing) return;
+      setLink('reconnecting…');
+      state.connected = false;
+      try { es.close(); } catch (e) {}
+      scheduleReconnect();
+    };
+    es.onmessage = function (ev) {
+      var frame;
+      try { frame = JSON.parse(ev.data); } catch (e) { return; }
+      unseal(frame).then(handleEnvelope).catch(function () {
+        fail('a frame failed authentication and was dropped');
+      });
+    };
+  }
+
+  function scheduleReconnect() {
+    if (state.closing) return;
+    var wait = Math.min(1000 * Math.pow(2, state.retry), 15000);
+    state.retry++;
+    setTimeout(function () { connect(true); }, wait);
+  }
+
+  var typingTimer = null;
+  function handleEnvelope(e) {
+    if (!e || !e.kind) return;
+    var d = e.data || {};
+    switch (e.kind) {
+      case 'ready':
+        $('h-host').textContent = d.host || '—';
+        $('h-safety').textContent = d.safety || '—';
+        break;
+
+      case 'msg':
+        if (d.from === 'host') {
+          state.rx++;
+          line('host', (d.nick || 'host') + ':', ' ' + d.body,
+               { ts: d.ts, old: d.old, mid: d.mid });
+        } else {
+          line('you', 'you:', ' ' + d.body, { ts: d.ts, old: d.old, mid: d.mid });
+        }
+        stats();
+        break;
+
+      case 'ack':
+        var row = logEl.querySelector('[data-mid="' + d.mid + '"] .rcpt');
+        if (row) row.textContent = 'delivered';
+        break;
+
+      case 'typing':
+        $('typing').textContent = ($('h-host').textContent || 'host') + ' is typing…';
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(function () { $('typing').textContent = ''; }, 2500);
+        break;
+
+      case 'bye':
+        state.closing = true;
+        if (state.es) { try { state.es.close(); } catch (x) {} }
+        setLink('closed');
+        setCipher('SESSION CLOSED', 'err');
+        $('input').disabled = true;
+        $('sendbtn').disabled = true;
+        fail('the host closed this session — ' + (d.reason || 'no reason given'));
+        setBanner('SESSION CLOSED — press RECONNECT to try again.');
+        break;
+    }
+  }
+
+  // ---- connect -----------------------------------------------------------
+  function connect(isRetry) {
+    state.closing = false;
+    setLink(isRetry ? 'reconnecting…' : 'connecting…');
+    if (!isRetry) {
+      sys('lanrunner guest terminal — protocol v' + CFG.v);
+      sys('invite ' + CFG.id + ' issued ' + CFG.created + ' for "' + CFG.label + '"');
+    }
+
+    probe()
+      .then(function (base) {
+        state.base = base;
+        $('h-addr').textContent = base.replace(/^https?:\/\//, '');
+        // Keep the whole origin. Dropping the scheme and port here meant a
+        // reconnect rebuilt the address as plain http on the wrong port, which
+        // an https page cannot fetch at all.
+        $('hostbox').value = base;
+        sys('reached ' + base);
+        return hello();
+      })
+      .then(function () {
+        openStream();
+      })
+      .catch(function (err) {
+        state.connected = false;
+        setLink('offline');
+        setCipher('NO SESSION', 'warn');
+        fail('could not connect — ' + (err && err.message ? err.message : err));
+        sys('checks: is Lanrunner running over there? are you both on the same network?');
+        sys('you can type a different address in the box at the bottom and press RECONNECT');
+        scheduleReconnect();
+      });
+  }
+
+  // ---- send --------------------------------------------------------------
+  function send(body) {
+    var row = line('you', 'you:', ' ' + body, { receipt: true, force: true });
+    state.tx++;
+    stats();
+    seal({ t: 'msg', body: body })
+      .then(function (frame) {
+        frame.id = CFG.id;
+        frame.sid = state.sid;
+        return post('/g/send', frame);
+      })
+      .then(function (r) {
+        if (r.status === 429) {
+          var rc = row.querySelector('.rcpt');
+          if (rc) rc.textContent = 'rate limited';
+          return;
+        }
+        if (!r.ok) throw new Error('http ' + r.status);
+        // A matching ack arrives on the stream and fills in the receipt.
+        setTimeout(function () {
+          var rc = row.querySelector('.rcpt');
+          if (rc && !rc.textContent) rc.textContent = 'sent';
+        }, 1200);
+      })
+      .catch(function () {
+        var rc = row.querySelector('.rcpt');
+        if (rc) rc.textContent = 'NOT DELIVERED';
+      });
+  }
+
+  var lastTyped = 0;
+  $('input').addEventListener('input', function () {
+    var now = Date.now();
+    if (!state.connected || now - lastTyped < 1500) return;
+    lastTyped = now;
+    seal({ t: 'typing' }).then(function (frame) {
+      frame.id = CFG.id;
+      frame.sid = state.sid;
+      return post('/g/typing', frame);
+    }).catch(function () {});
+  });
+
+  $('prompt').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var v = $('input').value.trim();
+    if (!v || !state.connected) return;
+    $('input').value = '';
+    send(v);
+  });
+
+  $('reconnect').addEventListener('click', function () {
+    if (state.es) { try { state.es.close(); } catch (e) {} }
+    state.retry = 0;
+    state.sid = null;
+    setBanner('');
+    connect(false);
+  });
+
+  window.addEventListener('beforeunload', function () {
+    if (!state.sid || !state.base) return;
+    var body = JSON.stringify({ id: CFG.id, sid: state.sid });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(state.base + '/g/bye', new Blob([body], { type: 'text/plain' }));
+    }
+  });
+
+  // ---- join gate ---------------------------------------------------------
+  $('g-inviteline').textContent =
+    'Invite "' + CFG.label + '" issued ' + CFG.created +
+    (CFG.expires && CFG.expires !== 'never' ? ', expires ' + CFG.expires : '') + '.';
+  $('g-hostline').textContent =
+    'You will be talking to ' + CFG.host_nick + ' at ' + (CFG.hosts[0] || '?') + ':' + CFG.port + '.';
+
+  var saved = '';
+  try { saved = window.localStorage.getItem('lanrunner-guest-' + CFG.id) || ''; } catch (e) {}
+  $('nick').value = saved;
+
+  function doJoin() {
+    var n = $('nick').value.trim();
+    if (!n) { $('gateerr').textContent = 'enter a name first'; $('nick').focus(); return; }
+    if (!subtle && !CFG.allow_plain) {
+      $('gateerr').textContent =
+        'This browser has no Web Crypto, and this invite requires encryption. ' +
+        'Try Chrome, Edge, Firefox or Safari, or ask for a kit that allows plaintext.';
+      return;
+    }
+    state.nick = n;
+    try { window.localStorage.setItem('lanrunner-guest-' + CFG.id, n); } catch (e) {}
+    $('gate').style.display = 'none';
+    connect(false);
+  }
+  $('join').addEventListener('click', doJoin);
+  $('nick').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') doJoin(); });
+  $('nick').focus();
+
+  $('hostbox').value = (CFG.hosts && CFG.hosts[0]) || '';
+  stats();
+})();
+</script>
+</body>
+</html>

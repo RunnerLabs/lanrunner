@@ -380,6 +380,93 @@
   .l.CRY .lv { color: #8e80ff; }
   .l.SEC { color: #ff9aab; background: #25050d; }
 
+  /* Guest kits — folders handed to people who do not run Lan Runner. */
+  #gnote { margin: 4px 0 7px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+  #gform input[type=text] {
+    width: 100%;
+    margin-bottom: 5px;
+    padding: 5px 7px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--paper);
+    font: 10px/1.4 var(--mono);
+  }
+  #gform input[type=text]:focus { border-color: var(--signal); outline: none; }
+  #gform input[type=text]::placeholder { color: var(--muted); }
+  #gform label.chk {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 9.5px;
+    line-height: 1.45;
+    cursor: pointer;
+  }
+  #gstatus { margin: 7px 0 5px; color: var(--muted); font-family: var(--mono); font-size: 9px; letter-spacing: .06em; }
+  #gerr {
+    display: none;
+    margin: 6px 0;
+    padding: 5px 6px;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    font-size: 9.5px;
+    line-height: 1.45;
+  }
+  .gk {
+    margin-bottom: 6px;
+    padding: 7px 8px;
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--muted);
+    background: rgba(255, 255, 255, .045);
+  }
+  .gk.on { border-left-color: var(--ok); }
+  .gk.dead { opacity: .5; border-left-color: var(--danger); }
+  .gk .gname {
+    font: 12px/1.2 var(--display);
+    letter-spacing: -.02em;
+    cursor: pointer;
+  }
+  .gk .gname:hover { color: var(--ok); }
+  .gk .gdot { color: var(--muted); }
+  .gk.on .gdot { color: var(--ok); }
+  .gk .gmeta {
+    margin-top: 2px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 9px;
+    word-break: break-all;
+  }
+  .gk .plain {
+    margin-left: 5px;
+    padding: 1px 4px;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    font: 700 8px/1.3 var(--mono);
+    letter-spacing: .08em;
+    vertical-align: 1px;
+  }
+  .gk .gact { margin-top: 6px; }
+  .gk .gact .btn { margin: 0 3px 3px 0; padding: 3px 6px; font-size: 8.5px; }
+
+  /* Collapsed by default so the panel stays compact; the QR is large when open. */
+  .gqr { margin-top: 6px; }
+  .gqr > summary {
+    cursor: pointer; list-style: none; padding: 3px 6px;
+    border: 1px solid var(--line); color: var(--muted);
+    font: 700 8.5px/1.5 var(--mono); letter-spacing: .09em; text-transform: uppercase;
+  }
+  .gqr > summary::-webkit-details-marker { display: none; }
+  .gqr > summary::before { content: '▸ '; }
+  .gqr[open] > summary::before { content: '▾ '; }
+  .gqr > summary:hover { color: var(--paper); border-color: var(--muted); }
+  .gqrbody { padding: 8px 0 2px; text-align: center; }
+  .gqrbody img { width: 190px; max-width: 100%; height: auto; background: #fff; padding: 6px; }
+  .gqrbody .gqrurl {
+    margin-top: 5px; color: var(--muted); font-family: var(--mono);
+    font-size: 8.5px; word-break: break-all; text-align: left;
+  }
+  .gqrbody .gqrnote { margin-top: 5px; color: var(--muted); font-size: 9px; text-align: left; line-height: 1.5; }
+  .gqrbody .gqrwarn { color: #ffd45a; }
+
   @media (max-width: 900px) {
     #wrap {
       grid-template-columns: 190px 1fr;
@@ -399,7 +486,7 @@
     <div class="brand-lockup">
       <span class="prompt">$</span>
       <h1>LAN RUNNER <span>LOCAL-FIRST ENCRYPTED MESSAGING</span></h1>
-      <span class="release-tag">v0.1.6 BETA</span>
+      <span class="release-tag">v0.1.7 BETA</span>
     </div>
     <button type="button" class="btn exit-button" id="exitapp" title="Stop Lan Runner and release its local ports">EXIT APP</button>
     <div id="ident">
@@ -445,6 +532,19 @@
       <ul id="fixes"></ul>
       <h3>Counters</h3>
       <table class="kv" id="counters"></table>
+      <h3>Guest Kits</h3>
+      <div id="gnote">Make a folder for someone who does not run Lan Runner. They open its
+        index.html on this network and you two can talk.</div>
+      <form id="gform">
+        <input type="text" id="glabel" maxlength="24" placeholder="who is it for? e.g. sam" autocomplete="off">
+        <input type="text" id="gfolder" placeholder="output folder (blank = default)" autocomplete="off">
+        <label class="chk"><input type="checkbox" id="gplain"> allow an unencrypted session if their browser cannot do crypto</label>
+        <button type="submit" class="btn">Generate guest folder</button>
+      </form>
+      <div id="gerr"></div>
+      <div id="gstatus"></div>
+      <div id="guests"></div>
+
       <h3>Selected Peer</h3>
       <div id="selpeer" class="empty" style="padding:2px">click a buddy</div>
     </div>
@@ -474,6 +574,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var out = $('out'), msgsEl = $('msgs'), peerlist = $('peerlist'), tabsEl = $('tabs');
   var sec = 0, me = null, peers = [], selected = null;
+  var guests = { enabled: false, port: 0, hosts: [], kitsdir: '', invites: [] };
 
   // conversation state: id -> {id, name, msgs:[], unread, loaded}
   var convs = { room: { id: 'room', name: 'LAN Room', msgs: [], unread: 0, loaded: false, loadToken: 0 } };
@@ -516,8 +617,19 @@
   $('clear').addEventListener('click', function () { out.innerHTML = ''; });
 
   // ---- tabs & messages ---------------------------------------------------
+  // The invite label is what YOU named the kit, so it is the trustworthy part.
+  // The guest picks their own display name, which means it could be chosen to
+  // impersonate a peer — so it never stands alone as the identity.
+  function guestName(id) {
+    for (var i = 0; i < guests.invites.length; i++) {
+      if (guests.invites[i].id === id) return guests.invites[i].label + ' (guest)';
+    }
+    return null;
+  }
   function convName(id) {
     if (id === 'room') return 'LAN Room';
+    var g = guestName(id);
+    if (g) return g;
     for (var i = 0; i < peers.length; i++) if (peers[i].fp === id) return peers[i].nick;
     return id.substring(0, 8);
   }
@@ -774,6 +886,269 @@
     box.appendChild(dm);
   }
 
+  // ---- guest kits --------------------------------------------------------
+  function guestErr(msg) {
+    var box = $('gerr');
+    box.textContent = msg || '';
+    box.style.display = msg ? 'block' : 'none';
+  }
+  function guestPost(path, body, done) {
+    fetch(path, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    }).then(function (r) {
+      if (r.ok) { guestErr(''); if (done) done(null); return; }
+      return r.text().then(function (t) {
+        guestErr(t.trim() || ('request failed: ' + r.status));
+        if (done) done(new Error(t));
+      });
+    }).catch(function (e) {
+      guestErr('request failed: ' + e.message);
+      if (done) done(e);
+    });
+  }
+  function actionBtn(text, title, fn) {
+    var b = document.createElement('button');
+    b.className = 'btn';
+    b.type = 'button';
+    b.textContent = text;
+    if (title) b.title = title;
+    b.addEventListener('click', fn);
+    return b;
+  }
+  function renderGuests() {
+    var box = $('guests'), st = $('gstatus');
+    box.innerHTML = '';
+
+    if (!guests.enabled) {
+      st.textContent = 'guest kits disabled (-no-guest)';
+      $('gform').style.display = 'none';
+      return;
+    }
+    $('gform').style.display = '';
+    st.textContent = guests.port
+      ? 'gateway ' + (guests.hosts[0] || '?') + ':' + guests.port + ' — open while an invite is live'
+      : 'gateway closed — no live invites, so no LAN port is open';
+
+    if (!guests.invites.length) {
+      var e = document.createElement('div');
+      e.className = 'empty';
+      e.style.padding = '2px';
+      e.textContent = 'no guest kits yet';
+      box.appendChild(e);
+      return;
+    }
+
+    guests.invites.forEach(function (g) {
+      var dead = g.revoked || g.expired;
+      var d = document.createElement('div');
+      d.className = 'gk' + (g.online ? ' on' : '') + (dead ? ' dead' : '');
+
+      var name = document.createElement('div');
+      name.className = 'gname';
+      var dot = document.createElement('span');
+      dot.className = 'gdot';
+      dot.textContent = '● ';
+      name.appendChild(dot);
+      name.appendChild(document.createTextNode(g.label));
+      if (g.plain) {
+        var p = document.createElement('span');
+        p.className = 'plain';
+        p.textContent = 'PLAINTEXT OK';
+        name.appendChild(p);
+      }
+      name.title = 'Open this guest conversation';
+      name.addEventListener('click', function () { openConv(g.id); });
+      d.appendChild(name);
+
+      var status = g.revoked ? 'REVOKED'
+                 : g.expired ? 'EXPIRED'
+                 : g.online ? g.online + ' connected'
+                 : 'nobody connected';
+      var m1 = document.createElement('div');
+      m1.className = 'gmeta';
+      m1.textContent = 'invite ' + g.id + '  ' + status;
+      d.appendChild(m1);
+
+      if (g.last_nick) {
+        var m0 = document.createElement('div');
+        m0.className = 'gmeta';
+        m0.textContent = 'calls themselves "' + g.last_nick + '"';
+        d.appendChild(m0);
+      }
+
+      var m2 = document.createElement('div');
+      m2.className = 'gmeta';
+      m2.textContent = g.folder;
+      d.appendChild(m2);
+
+      var m3 = document.createElement('div');
+      m3.className = 'gmeta';
+      m3.textContent = 'made ' + g.created +
+        (g.expires ? '  expires ' + g.expires : '  no expiry') +
+        (g.last_seen ? '  last seen ' + g.last_seen : '');
+      d.appendChild(m3);
+
+      var act = document.createElement('div');
+      act.className = 'gact';
+      act.appendChild(actionBtn('Message', 'Open this guest conversation',
+        function () { openConv(g.id); }));
+
+      if (!dead) {
+        act.appendChild(actionBtn('Open folder', 'Show the generated folder on this machine',
+          function () { guestPost('/guests/open', { id: g.id }); }));
+        act.appendChild(actionBtn('Refresh', 'Rewrite the folder with the current address and display name',
+          function () { guestPost('/guests/refresh', { id: g.id }, loadGuests); }));
+        act.appendChild(actionBtn('Revoke', 'Cut this kit off immediately',
+          function () {
+            if (!window.confirm('Revoke "' + g.label + '"? Their copy of the folder stops working right away.')) return;
+            guestPost('/guests/revoke', { id: g.id }, loadGuests);
+          }));
+      } else {
+        act.appendChild(actionBtn('Forget', 'Remove this dead invite from the list',
+          function () { guestPost('/guests/remove', { id: g.id }, loadGuests); }));
+      }
+      d.appendChild(act);
+
+      // Phones cannot use the kit folder at all — iOS previews a downloaded
+      // HTML file instead of running it — so the QR is their only way in.
+      // Collapsed by default to keep the panel small.
+      if (!dead) d.appendChild(qrBlock(g));
+
+      box.appendChild(d);
+    });
+  }
+  function qrBlock(g) {
+    var det = document.createElement('details');
+    det.className = 'gqr';
+
+    var sum = document.createElement('summary');
+    sum.textContent = 'QR code for phones';
+    det.appendChild(sum);
+
+    var body = document.createElement('div');
+    body.className = 'gqrbody';
+    body.textContent = 'opening…';
+    det.appendChild(body);
+
+    // A code is only minted when the panel is open, and is kept fresh while it
+    // stays open, so whatever is on screen is always scannable.
+    var ticker = null, refresher = null;
+    function stopTimers() {
+      if (ticker) { clearInterval(ticker); ticker = null; }
+      if (refresher) { clearTimeout(refresher); refresher = null; }
+    }
+    function load() {
+      stopTimers();
+      body.textContent = 'generating a join code…';
+      fetch('/guests/qr?id=' + encodeURIComponent(g.id))
+        .then(function (r) {
+          if (!r.ok) return r.text().then(function (t) { throw new Error(t.trim() || ('http ' + r.status)); });
+          return r.json();
+        })
+        .then(function (j) {
+          body.innerHTML = '';
+
+          var img = document.createElement('img');
+          img.alt = 'Scan to join as ' + g.label;
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(j.svg);
+          body.appendChild(img);
+
+          var url = document.createElement('div');
+          url.className = 'gqrurl';
+          url.textContent = j.url;
+          body.appendChild(url);
+
+          var left = document.createElement('div');
+          left.className = 'gqrnote';
+          body.appendChild(left);
+
+          var note = document.createElement('div');
+          note.className = 'gqrnote';
+          note.innerHTML =
+            '<span class="gqrwarn">The phone will warn that the certificate is not trusted.</span> ' +
+            'That is expected on a local network — tap through it. The session is still encrypted.' +
+            (j.cert ? '<br>Certificate ' + j.cert : '');
+          body.appendChild(note);
+
+          var again = actionBtn('New code', 'Replace this code with a fresh one', load);
+          again.style.marginTop = '6px';
+          body.appendChild(again);
+
+          // Live countdown, then a silent refresh before it lapses.
+          var remaining = j.seconds || 0;
+          function paint() {
+            if (remaining <= 0) { left.textContent = 'refreshing…'; return; }
+            var m = Math.floor(remaining / 60), s = remaining % 60;
+            left.textContent = 'Valid for ' + m + 'm ' + (s < 10 ? '0' : '') + s + 's — scan with the phone camera.';
+            remaining--;
+          }
+          paint();
+          ticker = setInterval(paint, 1000);
+          refresher = setTimeout(load, Math.max(15, (j.seconds || 60) - 30) * 1000);
+        })
+        .catch(function (e) {
+          body.innerHTML = '';
+          var err = document.createElement('div');
+          err.className = 'gqrnote gqrwarn';
+          err.textContent = 'No QR available: ' + e.message;
+          body.appendChild(err);
+          var retry = actionBtn('Try again', 'Request another join code', load);
+          retry.style.marginTop = '6px';
+          body.appendChild(retry);
+        });
+    }
+
+    det.addEventListener('toggle', function () {
+      if (det.open) { load(); } else { stopTimers(); body.textContent = ''; }
+    });
+    return det;
+  }
+  function loadGuests() {
+    fetch('/guests')
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        guests = j;
+        guests.invites = j.invites || [];
+        guests.hosts = j.hosts || [];
+        renderGuests();
+        renderTabs();
+      })
+      .catch(function () {});
+  }
+  $('gform').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var label = $('glabel').value.trim();
+    if (!label) { guestErr('give the kit a name so you can tell them apart'); return; }
+    var btn = $('gform').querySelector('button');
+    btn.disabled = true;
+    btn.textContent = 'GENERATING…';
+    fetch('/guests/new', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        label: label,
+        folder: $('gfolder').value.trim(),
+        allow_plain: $('gplain').checked
+      })
+    }).then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { throw new Error(t.trim() || ('http ' + r.status)); });
+      return r.json();
+    }).then(function (j) {
+      guestErr('');
+      $('glabel').value = '';
+      loadGuests();
+      openConv(j.id);
+      window.alert('Guest folder created:\n\n' + j.folder +
+        '\n\nSend the whole folder to ' + label + '. They open index.html on this network.\n' +
+        'It contains a private invite token — send it the way you would send a password.');
+    }).catch(function (e) {
+      guestErr(e.message);
+    }).then(function () {
+      btn.disabled = false;
+      btn.textContent = 'Generate guest folder';
+    });
+  });
+
   // ---- diagnostics -------------------------------------------------------
   function renderDiag(d) {
     var v = $('verdict');
@@ -832,6 +1207,15 @@
       case 'msg': addMsg(e.data); break;
       case 'ack': markAck(e.data); break;
       case 'peers': peers = e.data || []; renderPeers(); renderTabs(); break;
+      case 'guests':
+        guests.enabled = true;
+        guests.port = e.data.port;
+        guests.hosts = e.data.hosts || [];
+        guests.kitsdir = e.data.kitsdir || '';
+        guests.invites = e.data.invites || [];
+        renderGuests();
+        renderTabs();
+        break;
       case 'diag': renderDiag(e.data); break;
       case 'typing':
         if ((e.data.conv === 'dm' && active === e.data.fp) || (e.data.conv === 'room' && active === 'room')) {
@@ -906,6 +1290,7 @@
 
   renderTabs();
   openConv('room');
+  loadGuests();
 })();
 </script>
 </body>

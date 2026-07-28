@@ -55,16 +55,23 @@ func (s *stringList) Set(v string) error {
 }
 
 var (
-	flagNick      = flag.String("nick", "", "display name (default: hostname)")
-	flagUI        = flag.Int("ui", 8080, "loopback UI port")
-	flagTCP       = flag.Int("tcp", 47101, "TCP messaging port (0 chooses an automatic port)")
-	flagDisco     = flag.Int("disco", 47100, "UDP discovery port — must match on every device")
-	flagData      = flag.String("data", "", "data directory for identity and trust settings (chat history is memory-only)")
-	flagNoMc      = flag.Bool("no-multicast", false, "disable the multicast discovery channel")
-	flagSeeds     stringList
-	flagVerbose   = flag.Bool("v", false, "log every heartbeat frame too")
-	flagNoBrowser = flag.Bool("no-browser", false, "do not open the local web UI automatically")
-	flagIdle      = flag.Duration("idle", 30*time.Minute, "shut down after this much inactivity (0 disables)")
+	flagNick       = flag.String("nick", "", "display name (default: hostname)")
+	flagUI         = flag.Int("ui", 8080, "loopback UI port")
+	flagTCP        = flag.Int("tcp", 47101, "TCP messaging port (0 chooses an automatic port)")
+	flagDisco      = flag.Int("disco", 47100, "UDP discovery port — must match on every device")
+	flagData       = flag.String("data", "", "data directory for identity and trust settings (chat history is memory-only)")
+	flagNoMc       = flag.Bool("no-multicast", false, "disable the multicast discovery channel")
+	flagSeeds      stringList
+	flagVerbose    = flag.Bool("v", false, "log every heartbeat frame too")
+	flagNoBrowser  = flag.Bool("no-browser", false, "do not open the local web UI automatically")
+	flagIdle       = flag.Duration("idle", 30*time.Minute, "shut down after this much inactivity (0 disables)")
+	flagGuest      = flag.Int("guest", 47102, "LAN-facing port for guest kits (only opened while an invite exists)")
+	flagNoGuest    = flag.Bool("no-guest", false, "disable guest kits entirely")
+	flagKits       = flag.String("kits", "", "where generated guest kit folders are written")
+	flagGuestTTL   = flag.Duration("guest-ttl", 7*24*time.Hour, "guest invites stop working after this long (0 disables expiry)")
+	flagGuestAny   = flag.Bool("guest-any-source", false, "accept guest connections from outside private LAN ranges")
+	flagGuestTLS   = flag.Int("guest-tls", 47103, "HTTPS port for guest kits — phones can only connect over this")
+	flagNoGuestTLS = flag.Bool("no-guest-tls", false, "do not serve the HTTPS guest gateway (phones will not work)")
 )
 
 type runtimeState struct {
@@ -220,6 +227,7 @@ type App struct {
 	trust   *TrustStore
 	hist    *History
 	diag    *Diag
+	guests  *GuestHub
 	dataDir string
 
 	tcpPort   int
@@ -400,6 +408,11 @@ func main() {
 		app.logf("NET", "local", "manual seeds: %s", strings.Join(app.seeds, ", "))
 	}
 
+	if !*flagNoGuest {
+		app.guests = NewGuestHub(app, filepath.Join(dataDir, "guests.json"), *flagGuest)
+		app.guests.Resume()
+	}
+
 	go app.acceptLoop(ln)
 	go app.listenBroadcast()
 	if app.multicast {
@@ -446,6 +459,9 @@ func main() {
 	cancel()
 	app.sendBye()
 	app.closeAllConns()
+	if app.guests != nil {
+		app.guests.Close()
+	}
 	app.hist.Close()
 	time.Sleep(150 * time.Millisecond)
 }
@@ -522,6 +538,20 @@ func (a *App) pushPeers() {
 		return strings.ToLower(views[i].Nick) < strings.ToLower(views[j].Nick)
 	})
 	a.emit("peers", views)
+}
+
+// pushGuests refreshes the operator's guest-kit panel. Tokens never appear in
+// this payload — the only copy a guest ever sees is the one in its folder.
+func (a *App) pushGuests() {
+	if a.guests == nil {
+		return
+	}
+	a.emit("guests", map[string]any{
+		"port":    a.guests.Port(),
+		"hosts":   kitHostCandidates(),
+		"kitsdir": kitsBaseDir(),
+		"invites": a.guests.Views(),
+	})
 }
 
 func (a *App) currentNick() string {
@@ -665,19 +695,39 @@ func localIPs() []string {
 	return out
 }
 
+// primaryIP is our best guess at the address other devices should use to reach
+// this machine.
+//
+// A 169.254.0.0/16 address means that interface asked for a DHCP lease and
+// never got one, so nothing on the LAN can route to it. Windows machines with a
+// spare virtual or disconnected adapter routinely carry several. Returning one
+// would print a dead address in the UI and bake a dead address into guest kits,
+// so link-local is only ever a last resort.
 func primaryIP() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		return "unknown"
 	}
+	linkLocal := ""
 	for _, a := range addrs {
 		ipn, ok := a.(*net.IPNet)
 		if !ok || ipn.IP.IsLoopback() {
 			continue
 		}
-		if ip4 := ipn.IP.To4(); ip4 != nil {
-			return ip4.String()
+		ip4 := ipn.IP.To4()
+		if ip4 == nil {
+			continue
 		}
+		if ip4.IsLinkLocalUnicast() {
+			if linkLocal == "" {
+				linkLocal = ip4.String()
+			}
+			continue
+		}
+		return ip4.String()
+	}
+	if linkLocal != "" {
+		return linkLocal
 	}
 	return "127.0.0.1"
 }

@@ -114,6 +114,41 @@ buddies talking to each other. The separate `-data` and `-tcp` values matter —
 without them the second copy reuses the same identity key and contends for the
 default messaging port.
 
+## Step 7 — Invite someone who hasn't installed anything
+
+Step 6 assumes the other person runs Lanrunner. If they don't want to, use a
+guest kit instead.
+
+In the right-hand **Diagnostics** panel, find **Guest Kits**. Type who it's for
+and press **Generate guest folder**. A folder appears on your Desktop under
+`Lanrunner Guest Kits`.
+
+**For a computer:** send them the whole folder however you like. They
+double-click `index.html`, type a name, and you're talking. It's one
+self-contained file — nothing to install.
+
+**For a phone:** don't send the file. It will not work, and that's iOS's rule
+rather than a bug — a downloaded HTML file opens in Quick Look, which blocks
+scripts and the network. Instead expand **QR code for phones** under the kit and
+point their camera at it.
+
+Their phone will warn that the certificate isn't trusted. Tap **Show Details →
+visit this website**. That warning is expected on a local network: there's no
+certificate authority on an offline LAN. The connection is still encrypted — the
+warning only means nobody has vouched for the name. The fingerprint is shown
+next to the QR if they want to check it with you out loud.
+
+Their messages arrive as a new tab in your window, labelled with the name you
+gave the kit.
+
+When you're done, press **Revoke**. Their copy stops working immediately.
+Invites also expire on their own after a week.
+
+> The folder holds a secret token — anyone with a copy can message you as that
+> guest. Send it the way you'd send a password.
+
+Phones connect over TCP `47103`, so allow that inbound too if you're prompted.
+
 ---
 
 ## What to click once it's running
@@ -139,6 +174,10 @@ default messaging port.
 | Peer appears but connection times out | Allow inbound TCP `47101` on the peer device. |
 | Works one direction only | One side's inbound TCP `47101` is blocked. |
 | Two copies, one identity | Give the second `-data .\bob-data`. |
+| Guest kit does nothing on a phone | Expected — iOS previews HTML files instead of running them. Use the QR code. |
+| Phone says the link expired | Join codes last 30 minutes and don't survive restarting Lanrunner. Reopen the QR panel for a fresh one. |
+| Phone says "not private" | Expected on a LAN. Tap *Show Details → visit this website*. |
+| Guest page loads but never connects | Their device must be on the same network, and inbound TCP `47103` must be allowed. |
 
 ## Everyday use
 

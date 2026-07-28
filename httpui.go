@@ -3,9 +3,11 @@ package main
 import (
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 )
@@ -28,6 +30,180 @@ func (a *App) routes(mux *http.ServeMux) {
 	mux.HandleFunc("/clear-messages", a.handleClearMessages)
 	mux.HandleFunc("/diag", a.handleDiag)
 	mux.HandleFunc("/exit", a.handleExit)
+	mux.HandleFunc("/guests", a.handleGuests)
+	mux.HandleFunc("/guests/new", a.handleGuestNew)
+	mux.HandleFunc("/guests/revoke", a.handleGuestRevoke)
+	mux.HandleFunc("/guests/remove", a.handleGuestRemove)
+	mux.HandleFunc("/guests/refresh", a.handleGuestRefresh)
+	mux.HandleFunc("/guests/open", a.handleGuestOpen)
+	mux.HandleFunc("/guests/qr", a.handleGuestQR)
+}
+
+// handleGuestQR mints a fresh handoff code and returns the QR that carries it.
+// This is the only route a phone can use: iOS will not run a downloaded HTML
+// file, so the guest client has to be fetched from us over HTTPS instead.
+func (a *App) handleGuestQR(w http.ResponseWriter, r *http.Request) {
+	hub, ok := a.guestHub(w)
+	if !ok {
+		return
+	}
+	id := r.URL.Query().Get("id")
+	if !hub.IsInvite(id) {
+		http.Error(w, "unknown invite", http.StatusNotFound)
+		return
+	}
+	a.touchActivity()
+
+	url, expires, err := hub.JoinURL(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+	svg, err := QRCodeSVG(url)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fingerprint, _ := hub.certInfo()
+
+	a.logf("SYS", "guest", "issued a join code for %q — valid for %s",
+		hub.Label(id), dur(time.Until(expires)))
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"url":     url,
+		"svg":     svg,
+		"expires": expires.Format("15:04:05"),
+		"seconds": int(time.Until(expires).Seconds()),
+		"cert":    fingerprint,
+	})
+}
+
+// guestHub returns the hub, or writes the "disabled" response and reports false.
+func (a *App) guestHub(w http.ResponseWriter) (*GuestHub, bool) {
+	if a.guests == nil {
+		http.Error(w, "guest kits are disabled (-no-guest)", http.StatusServiceUnavailable)
+		return nil, false
+	}
+	return a.guests, true
+}
+
+func (a *App) handleGuests(w http.ResponseWriter, r *http.Request) {
+	a.touchActivity()
+	w.Header().Set("Content-Type", "application/json")
+	if a.guests == nil {
+		_ = json.NewEncoder(w).Encode(map[string]any{"enabled": false, "invites": []any{}})
+		return
+	}
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"enabled": true,
+		"port":    a.guests.Port(),
+		"hosts":   kitHostCandidates(),
+		"kitsdir": kitsBaseDir(),
+		"invites": a.guests.Views(),
+	})
+}
+
+func (a *App) handleGuestNew(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST only", http.StatusMethodNotAllowed)
+		return
+	}
+	hub, ok := a.guestHub(w)
+	if !ok {
+		return
+	}
+	var in struct {
+		Label      string `json:"label"`
+		Folder     string `json:"folder"`
+		AllowPlain bool   `json:"allow_plain"`
+	}
+	if err := decodeBody(r, &in); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	a.touchActivity()
+	inv, err := hub.Create(in.Label, in.Folder, in.AllowPlain)
+	if err != nil {
+		a.logf("SEC", "guest", "could not create a guest kit: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"id": inv.ID, "label": inv.Label, "folder": inv.Folder, "port": hub.Port(),
+	})
+}
+
+// guestAction is the shared shape of the small id-only guest endpoints.
+func (a *App) guestAction(w http.ResponseWriter, r *http.Request, fn func(*GuestHub, string) error) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST only", http.StatusMethodNotAllowed)
+		return
+	}
+	hub, ok := a.guestHub(w)
+	if !ok {
+		return
+	}
+	var in struct {
+		ID string `json:"id"`
+	}
+	if err := decodeBody(r, &in); err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	a.touchActivity()
+	if err := fn(hub, in.ID); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (a *App) handleGuestRevoke(w http.ResponseWriter, r *http.Request) {
+	a.guestAction(w, r, func(h *GuestHub, id string) error {
+		if !h.Revoke(id) {
+			return errors.New("unknown invite")
+		}
+		return nil
+	})
+}
+
+func (a *App) handleGuestRemove(w http.ResponseWriter, r *http.Request) {
+	a.guestAction(w, r, func(h *GuestHub, id string) error {
+		if !h.Remove(id) {
+			return errors.New("unknown invite")
+		}
+		return nil
+	})
+}
+
+func (a *App) handleGuestRefresh(w http.ResponseWriter, r *http.Request) {
+	a.guestAction(w, r, func(h *GuestHub, id string) error {
+		_, err := h.Regenerate(id)
+		return err
+	})
+}
+
+// handleGuestOpen reveals a generated folder in the desktop file manager, which
+// is the step the operator takes next: send this folder to the guest.
+func (a *App) handleGuestOpen(w http.ResponseWriter, r *http.Request) {
+	a.guestAction(w, r, func(h *GuestHub, id string) error {
+		folder := ""
+		for _, v := range h.Views() {
+			if v.ID == id {
+				folder = v.Folder
+			}
+		}
+		if folder == "" {
+			return errors.New("unknown invite")
+		}
+		if _, err := os.Stat(folder); err != nil {
+			return fmt.Errorf("folder is gone: %s", folder)
+		}
+		return openBrowser(folder)
+	})
 }
 
 func (a *App) handleIndex(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +285,7 @@ func (a *App) handleEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.pushPeers()
+	a.pushGuests()
 
 	keep := time.NewTicker(20 * time.Second)
 	defer keep.Stop()

@@ -519,7 +519,8 @@ func (c *Conn) handleFrame(pt []byte) {
 
 // ---------------------------------------------------------------- send path
 
-// Send delivers a message to the room (conv == "room") or to a single peer.
+// Send delivers a message to the room (conv == "room"), to a single peer, or to
+// a guest kit conversation.
 func (a *App) Send(conv, body string) {
 	body, _ = sanitizeBody(body)
 	if body == "" {
@@ -527,6 +528,13 @@ func (a *App) Send(conv, body string) {
 	}
 	if len([]rune(body)) > maxBodyRunes {
 		body = string([]rune(body)[:maxBodyRunes])
+	}
+
+	// A guest conversation has no peer session behind it — it is served over the
+	// guest gateway instead, so it takes its own path.
+	if a.guests != nil && a.guests.IsInvite(conv) {
+		a.sendToGuest(conv, body)
+		return
 	}
 
 	a.mu.Lock()
@@ -584,7 +592,41 @@ func (a *App) Send(conv, body string) {
 	}
 }
 
+// sendToGuest mirrors the peer send path — same history, same UI event, same
+// receipt — but hands the body to the guest gateway instead of a TCP session.
+func (a *App) sendToGuest(conv, body string) {
+	nick := a.currentNick()
+	mid := randHex(6)
+
+	a.hist.Append(HistEntry{
+		TS: nowMS(), Conv: conv, FP: a.id.FP, Nick: nick, Self: true, Body: body, MID: mid,
+	})
+	a.emit("msg", ChatMsg{
+		TS: stamp(), Conv: conv, MID: mid, FP: a.id.FP, Nick: nick,
+		Self: true, Body: body, Enc: "AES-256-GCM",
+	})
+
+	n := a.guests.Deliver(conv, "msg", map[string]any{
+		"ts": stamp()[:8], "mid": mid, "from": "host", "nick": nick, "body": body,
+	})
+	if n == 0 {
+		a.logf("SEC", "guest", "%s is not connected — message %s composed but not transmitted",
+			a.guests.Label(conv), mid)
+		return
+	}
+	a.logf("PKT", "guest", "TX guest msg conv=%s mid=%s plaintext=%dB fanout=%d — sealed per session",
+		shortFP(conv), mid, len(body), n)
+	a.emit("ack", map[string]any{
+		"mid": mid, "conv": conv, "fp": conv, "nick": a.guests.Label(conv),
+	})
+	a.hist.MarkDelivered(conv, mid)
+}
+
 func (a *App) SendTyping(conv string) {
+	if a.guests != nil && a.guests.IsInvite(conv) {
+		a.guests.Deliver(conv, "typing", map[string]any{"nick": a.currentNick()})
+		return
+	}
 	a.mu.Lock()
 	var targets []*Conn
 	if conv == "room" {
