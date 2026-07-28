@@ -55,21 +55,23 @@ func (s *stringList) Set(v string) error {
 }
 
 var (
-	flagNick      = flag.String("nick", "", "display name (default: hostname)")
-	flagUI        = flag.Int("ui", 8080, "loopback UI port")
-	flagTCP       = flag.Int("tcp", 47101, "TCP messaging port (0 chooses an automatic port)")
-	flagDisco     = flag.Int("disco", 47100, "UDP discovery port — must match on every device")
-	flagData      = flag.String("data", "", "data directory for identity and trust settings (chat history is memory-only)")
-	flagNoMc      = flag.Bool("no-multicast", false, "disable the multicast discovery channel")
-	flagSeeds     stringList
-	flagVerbose   = flag.Bool("v", false, "log every heartbeat frame too")
-	flagNoBrowser = flag.Bool("no-browser", false, "do not open the local web UI automatically")
-	flagIdle      = flag.Duration("idle", 30*time.Minute, "shut down after this much inactivity (0 disables)")
-	flagGuest     = flag.Int("guest", 47102, "LAN-facing port for guest kits (only opened while an invite exists)")
-	flagNoGuest   = flag.Bool("no-guest", false, "disable guest kits entirely")
-	flagKits      = flag.String("kits", "", "where generated guest kit folders are written")
-	flagGuestTTL  = flag.Duration("guest-ttl", 7*24*time.Hour, "guest invites stop working after this long (0 disables expiry)")
-	flagGuestAny  = flag.Bool("guest-any-source", false, "accept guest connections from outside private LAN ranges")
+	flagNick       = flag.String("nick", "", "display name (default: hostname)")
+	flagUI         = flag.Int("ui", 8080, "loopback UI port")
+	flagTCP        = flag.Int("tcp", 47101, "TCP messaging port (0 chooses an automatic port)")
+	flagDisco      = flag.Int("disco", 47100, "UDP discovery port — must match on every device")
+	flagData       = flag.String("data", "", "data directory for identity and trust settings (chat history is memory-only)")
+	flagNoMc       = flag.Bool("no-multicast", false, "disable the multicast discovery channel")
+	flagSeeds      stringList
+	flagVerbose    = flag.Bool("v", false, "log every heartbeat frame too")
+	flagNoBrowser  = flag.Bool("no-browser", false, "do not open the local web UI automatically")
+	flagIdle       = flag.Duration("idle", 30*time.Minute, "shut down after this much inactivity (0 disables)")
+	flagGuest      = flag.Int("guest", 47102, "LAN-facing port for guest kits (only opened while an invite exists)")
+	flagNoGuest    = flag.Bool("no-guest", false, "disable guest kits entirely")
+	flagKits       = flag.String("kits", "", "where generated guest kit folders are written")
+	flagGuestTTL   = flag.Duration("guest-ttl", 7*24*time.Hour, "guest invites stop working after this long (0 disables expiry)")
+	flagGuestAny   = flag.Bool("guest-any-source", false, "accept guest connections from outside private LAN ranges")
+	flagGuestTLS   = flag.Int("guest-tls", 47103, "HTTPS port for guest kits — phones can only connect over this")
+	flagNoGuestTLS = flag.Bool("no-guest-tls", false, "do not serve the HTTPS guest gateway (phones will not work)")
 )
 
 type runtimeState struct {

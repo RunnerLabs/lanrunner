@@ -447,6 +447,26 @@
   .gk .gact { margin-top: 6px; }
   .gk .gact .btn { margin: 0 3px 3px 0; padding: 3px 6px; font-size: 8.5px; }
 
+  /* Collapsed by default so the panel stays compact; the QR is large when open. */
+  .gqr { margin-top: 6px; }
+  .gqr > summary {
+    cursor: pointer; list-style: none; padding: 3px 6px;
+    border: 1px solid var(--line); color: var(--muted);
+    font: 700 8.5px/1.5 var(--mono); letter-spacing: .09em; text-transform: uppercase;
+  }
+  .gqr > summary::-webkit-details-marker { display: none; }
+  .gqr > summary::before { content: '▸ '; }
+  .gqr[open] > summary::before { content: '▾ '; }
+  .gqr > summary:hover { color: var(--paper); border-color: var(--muted); }
+  .gqrbody { padding: 8px 0 2px; text-align: center; }
+  .gqrbody img { width: 190px; max-width: 100%; height: auto; background: #fff; padding: 6px; }
+  .gqrbody .gqrurl {
+    margin-top: 5px; color: var(--muted); font-family: var(--mono);
+    font-size: 8.5px; word-break: break-all; text-align: left;
+  }
+  .gqrbody .gqrnote { margin-top: 5px; color: var(--muted); font-size: 9px; text-align: left; line-height: 1.5; }
+  .gqrbody .gqrwarn { color: #ffd45a; }
+
   @media (max-width: 900px) {
     #wrap {
       grid-template-columns: 190px 1fr;
@@ -989,8 +1009,100 @@
           function () { guestPost('/guests/remove', { id: g.id }, loadGuests); }));
       }
       d.appendChild(act);
+
+      // Phones cannot use the kit folder at all — iOS previews a downloaded
+      // HTML file instead of running it — so the QR is their only way in.
+      // Collapsed by default to keep the panel small.
+      if (!dead) d.appendChild(qrBlock(g));
+
       box.appendChild(d);
     });
+  }
+  function qrBlock(g) {
+    var det = document.createElement('details');
+    det.className = 'gqr';
+
+    var sum = document.createElement('summary');
+    sum.textContent = 'QR code for phones';
+    det.appendChild(sum);
+
+    var body = document.createElement('div');
+    body.className = 'gqrbody';
+    body.textContent = 'opening…';
+    det.appendChild(body);
+
+    // A code is only minted when the panel is open, and is kept fresh while it
+    // stays open, so whatever is on screen is always scannable.
+    var ticker = null, refresher = null;
+    function stopTimers() {
+      if (ticker) { clearInterval(ticker); ticker = null; }
+      if (refresher) { clearTimeout(refresher); refresher = null; }
+    }
+    function load() {
+      stopTimers();
+      body.textContent = 'generating a join code…';
+      fetch('/guests/qr?id=' + encodeURIComponent(g.id))
+        .then(function (r) {
+          if (!r.ok) return r.text().then(function (t) { throw new Error(t.trim() || ('http ' + r.status)); });
+          return r.json();
+        })
+        .then(function (j) {
+          body.innerHTML = '';
+
+          var img = document.createElement('img');
+          img.alt = 'Scan to join as ' + g.label;
+          img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(j.svg);
+          body.appendChild(img);
+
+          var url = document.createElement('div');
+          url.className = 'gqrurl';
+          url.textContent = j.url;
+          body.appendChild(url);
+
+          var left = document.createElement('div');
+          left.className = 'gqrnote';
+          body.appendChild(left);
+
+          var note = document.createElement('div');
+          note.className = 'gqrnote';
+          note.innerHTML =
+            '<span class="gqrwarn">The phone will warn that the certificate is not trusted.</span> ' +
+            'That is expected on a local network — tap through it. The session is still encrypted.' +
+            (j.cert ? '<br>Certificate ' + j.cert : '');
+          body.appendChild(note);
+
+          var again = actionBtn('New code', 'Replace this code with a fresh one', load);
+          again.style.marginTop = '6px';
+          body.appendChild(again);
+
+          // Live countdown, then a silent refresh before it lapses.
+          var remaining = j.seconds || 0;
+          function paint() {
+            if (remaining <= 0) { left.textContent = 'refreshing…'; return; }
+            var m = Math.floor(remaining / 60), s = remaining % 60;
+            left.textContent = 'Valid for ' + m + 'm ' + (s < 10 ? '0' : '') + s + 's — scan with the phone camera.';
+            remaining--;
+          }
+          paint();
+          ticker = setInterval(paint, 1000);
+          refresher = setTimeout(load, Math.max(15, (j.seconds || 60) - 30) * 1000);
+        })
+        .catch(function (e) {
+          body.innerHTML = '';
+          var err = document.createElement('div');
+          err.className = 'gqrnote gqrwarn';
+          err.textContent = 'No QR available: ' + e.message;
+          body.appendChild(err);
+          var retry = actionBtn('Try again', 'Request another join code', load);
+          retry.style.marginTop = '6px';
+          body.appendChild(retry);
+        });
+    }
+
+    det.addEventListener('toggle', function () {
+      if (det.open) { load(); } else { stopTimers(); body.textContent = ''; }
+    });
+    return det;
   }
   function loadGuests() {
     fetch('/guests')

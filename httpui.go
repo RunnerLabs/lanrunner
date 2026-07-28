@@ -36,6 +36,48 @@ func (a *App) routes(mux *http.ServeMux) {
 	mux.HandleFunc("/guests/remove", a.handleGuestRemove)
 	mux.HandleFunc("/guests/refresh", a.handleGuestRefresh)
 	mux.HandleFunc("/guests/open", a.handleGuestOpen)
+	mux.HandleFunc("/guests/qr", a.handleGuestQR)
+}
+
+// handleGuestQR mints a fresh handoff code and returns the QR that carries it.
+// This is the only route a phone can use: iOS will not run a downloaded HTML
+// file, so the guest client has to be fetched from us over HTTPS instead.
+func (a *App) handleGuestQR(w http.ResponseWriter, r *http.Request) {
+	hub, ok := a.guestHub(w)
+	if !ok {
+		return
+	}
+	id := r.URL.Query().Get("id")
+	if !hub.IsInvite(id) {
+		http.Error(w, "unknown invite", http.StatusNotFound)
+		return
+	}
+	a.touchActivity()
+
+	url, expires, err := hub.JoinURL(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+	svg, err := QRCodeSVG(url)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fingerprint, _ := hub.certInfo()
+
+	a.logf("SYS", "guest", "issued a join code for %q — valid for %s",
+		hub.Label(id), dur(time.Until(expires)))
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"url":     url,
+		"svg":     svg,
+		"expires": expires.Format("15:04:05"),
+		"seconds": int(time.Until(expires).Seconds()),
+		"cert":    fingerprint,
+	})
 }
 
 // guestHub returns the hub, or writes the "disabled" response and reports false.

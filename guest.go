@@ -30,11 +30,13 @@ import (
 	"crypto/ecdh"
 	"crypto/rand"
 	"crypto/subtle"
+	"crypto/tls"
 	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -180,6 +182,100 @@ func (t *authThrottle) sweep() {
 		}
 	}
 	t.mu.Unlock()
+}
+
+// ---------------------------------------------------------------- handoff codes
+
+// A handoff code is what a QR actually carries. It is deliberately NOT the
+// invite token: the join page is fetched over the LAN, so whatever is in the
+// URL is the weakest link. A code is short-lived, usable only a couple of times
+// (enough for a reload or a second scan), and can be replaced at will without
+// invalidating the invite itself.
+// Long enough to open the panel, walk to a phone, scan, tap through the
+// certificate warning and type a name — that whole ceremony is slower than it
+// sounds. Several uses, because scanning often reloads the page.
+// The use count is generous on purpose. Serving the page is not the sensitive
+// act — the code's real protection is its short life, the LAN-only rule, and
+// the invite being revocable. Browsers re-request pages constantly: Safari
+// prefetches on scan, the certificate interstitial reloads after you accept it,
+// and any pull-to-refresh costs another. A tight limit only ever locked out the
+// legitimate guest.
+const (
+	handoffLifetime = 30 * time.Minute
+	handoffMaxUses  = 20
+	handoffMax      = 128
+)
+
+type handoffCode struct {
+	invite  string
+	expires time.Time
+	uses    int
+}
+
+func (h *GuestHub) newHandoff(inviteID string) (string, time.Time) {
+	code := randHex(9) // 18 hex chars, short enough for a dense QR
+	expires := time.Now().Add(handoffLifetime)
+
+	h.mu.Lock()
+	// Only drop codes that have actually expired. Minting a new code must never
+	// kill one already on screen or in someone's camera — issuing a QR for a
+	// second device would otherwise silently break the first.
+	for c, rec := range h.handoffs {
+		if time.Now().After(rec.expires) {
+			delete(h.handoffs, c)
+		}
+	}
+	if len(h.handoffs) >= handoffMax {
+		oldest, oldestAt := "", time.Now().Add(time.Hour)
+		for c, rec := range h.handoffs {
+			if rec.expires.Before(oldestAt) {
+				oldest, oldestAt = c, rec.expires
+			}
+		}
+		delete(h.handoffs, oldest)
+	}
+	h.handoffs[code] = &handoffCode{invite: inviteID, expires: expires}
+	h.mu.Unlock()
+
+	return code, expires
+}
+
+// redeemHandoff resolves a code to its invite and spends one use. The reason
+// string names the exact failure so the operator log is diagnostic rather than
+// a shrug — the guest still sees only a generic message.
+func (h *GuestHub) redeemHandoff(code string) (*Invite, string) {
+	if code == "" {
+		return nil, "no code in the link"
+	}
+	h.mu.Lock()
+	rec, ok := h.handoffs[code]
+	if !ok {
+		h.mu.Unlock()
+		return nil, "unknown code (it may predate a restart — Lan Runner does not keep join codes across runs)"
+	}
+	if time.Now().After(rec.expires) {
+		delete(h.handoffs, code)
+		h.mu.Unlock()
+		return nil, "code expired"
+	}
+	if rec.uses >= handoffMaxUses {
+		delete(h.handoffs, code)
+		h.mu.Unlock()
+		return nil, fmt.Sprintf("code already used %d times", rec.uses)
+	}
+	rec.uses++
+	used := rec.uses
+	in, exists := h.invites[rec.invite]
+	h.mu.Unlock()
+
+	if !exists {
+		return nil, "the invite behind this code is gone"
+	}
+	if !in.usable() {
+		return nil, "the invite is revoked or expired"
+	}
+	_ = used
+	return in, ""
 }
 
 // ---------------------------------------------------------------- source policy
@@ -362,23 +458,32 @@ type GuestHub struct {
 	invites   map[string]*Invite
 	order     []string
 	announced map[string]bool                     // expiry already logged
+	handoffs  map[string]*handoffCode             // QR code -> invite
 	sessions  map[string]*guestSession            // sid -> session
 	byInvite  map[string]map[string]*guestSession // invite id -> sid -> session
 
-	srvMu   sync.Mutex
-	srv     *http.Server
-	ln      net.Listener
-	running bool
+	srvMu    sync.Mutex
+	srv      *http.Server
+	ln       net.Listener
+	running  bool
+	tlsSrv   *http.Server
+	tlsLn    net.Listener
+	plainSrv *http.Server
+	plainLn  net.Listener
+	tlsPort  int
+	cert     *guestCert
+	tlsError string
 }
 
 func NewGuestHub(a *App, path string, port int) *GuestHub {
 	h := &GuestHub{
-		app:      a,
-		path:     path,
-		port:     port,
+		app:       a,
+		path:      path,
+		port:      port,
 		throttle:  newAuthThrottle(),
 		invites:   map[string]*Invite{},
 		announced: map[string]bool{},
+		handoffs:  map[string]*handoffCode{},
 		sessions:  map[string]*guestSession{},
 		byInvite:  map[string]map[string]*guestSession{},
 	}
@@ -541,6 +646,7 @@ func (h *GuestHub) ensureServer() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", h.handleRoot)
+	mux.HandleFunc("/join", h.handleJoin)
 	mux.HandleFunc("/g/ping", h.handlePing)
 	mux.HandleFunc("/g/hello", h.handleHello)
 	mux.HandleFunc("/g/events", h.handleEvents)
@@ -559,15 +665,156 @@ func (h *GuestHub) ensureServer() error {
 	}(h.srv, ln)
 
 	h.app.logf("NET", "guest", "guest gateway listening on 0.0.0.0:%d — reachable from the LAN, invite token required", h.port)
+	h.startTLSLocked(mux)
 	go h.reapLoop()
 	return nil
+}
+
+// startTLSLocked brings up the HTTPS twin of the gateway. Phones need it: iOS
+// will not run a downloaded HTML file, and Safari only grants crypto.subtle to
+// a secure context, so a phone guest can only get an encrypted session by
+// loading the page from us over TLS. Failure here is not fatal — desktop guests
+// using the kit folder never touch it.
+func (h *GuestHub) startTLSLocked(mux *http.ServeMux) {
+	if *flagNoGuestTLS {
+		h.tlsError = "disabled with -no-guest-tls"
+		return
+	}
+	cert, err := loadOrCreateGuestCert(h.app.dataDir)
+	if err != nil {
+		h.tlsError = err.Error()
+		h.app.logf("SEC", "guest", "no HTTPS for guests (%v) — phones will not be able to connect", err)
+		return
+	}
+
+	ln, err := net.Listen("tcp4", fmt.Sprintf("0.0.0.0:%d", *flagGuestTLS))
+	if err != nil {
+		ln, err = net.Listen("tcp4", "0.0.0.0:0")
+	}
+	if err != nil {
+		h.tlsError = err.Error()
+		h.app.logf("SEC", "guest", "could not open the HTTPS guest port: %v", err)
+		return
+	}
+
+	h.cert = cert
+	h.tlsPort = ln.Addr().(*net.TCPAddr).Port
+
+	// Anyone who arrives over plain http gets bounced to https rather than
+	// meeting Go's raw protocol error.
+	tlsSide, plainSide := splitByScheme(ln)
+	h.tlsLn = tls.NewListener(tlsSide, &tls.Config{
+		Certificates: []tls.Certificate{cert.tls},
+		MinVersion:   tls.VersionTLS12,
+	})
+	h.tlsSrv = &http.Server{Handler: mux, ReadHeaderTimeout: 10 * time.Second}
+	h.plainLn = plainSide
+	h.plainSrv = &http.Server{
+		Handler:           redirectToHTTPS(h.tlsPort),
+		ReadHeaderTimeout: 10 * time.Second,
+	}
+	h.tlsError = ""
+
+	go func(srv *http.Server, ln net.Listener) {
+		if err := srv.Serve(ln); err != nil && err != http.ErrServerClosed {
+			h.app.logf("NET", "guest", "HTTPS guest gateway stopped: %v", err)
+		}
+	}(h.tlsSrv, h.tlsLn)
+
+	go func(srv *http.Server, ln net.Listener) {
+		_ = srv.Serve(ln) // redirect helper; its shutdown is not interesting
+	}(h.plainSrv, h.plainLn)
+
+	h.app.logf("NET", "guest", "HTTPS guest gateway listening on 0.0.0.0:%d — this is the one phones use", h.tlsPort)
+	h.app.logf("CRY", "guest", "guest certificate fingerprint %s (self-signed, expires %s)",
+		cert.fingerprint, cert.notAfter.Format("2006-01-02"))
+}
+
+// TLSPort reports the HTTPS port, or 0 when HTTPS is unavailable.
+func (h *GuestHub) TLSPort() int {
+	h.srvMu.Lock()
+	defer h.srvMu.Unlock()
+	if !h.running {
+		return 0
+	}
+	return h.tlsPort
+}
+
+func (h *GuestHub) certInfo() (fingerprint, problem string) {
+	h.srvMu.Lock()
+	defer h.srvMu.Unlock()
+	if h.cert != nil {
+		return h.cert.fingerprint, h.tlsError
+	}
+	return "", h.tlsError
+}
+
+// JoinURL builds the address a QR encodes: the HTTPS join page plus a
+// short-lived handoff code.
+func (h *GuestHub) JoinURL(inviteID string) (string, time.Time, error) {
+	if !h.IsInvite(inviteID) {
+		return "", time.Time{}, errors.New("unknown invite")
+	}
+	port := h.TLSPort()
+	if port == 0 {
+		_, problem := h.certInfo()
+		if problem == "" {
+			problem = "HTTPS is not running"
+		}
+		return "", time.Time{}, errors.New(problem)
+	}
+	code, expires := h.newHandoff(inviteID)
+	host := primaryIP()
+	return fmt.Sprintf("https://%s:%d/join?c=%s", host, port, code), expires, nil
+}
+
+// handleJoin serves the guest client itself, over TLS, with this invite's
+// details already inlined — the same page the kit folder contains, delivered a
+// way a phone can actually run.
+func (h *GuestHub) handleJoin(w http.ResponseWriter, r *http.Request) {
+	if !h.guestGate(w, r) {
+		return
+	}
+	remote := guestRemote(r)
+	inv, why := h.redeemHandoff(r.URL.Query().Get("c"))
+	if inv == nil {
+		h.app.logf("SEC", "guest/"+remote, "join link refused — %s", why)
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = io.WriteString(w, `<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">`+
+			`<body style="font:17px system-ui;background:#05070a;color:#ff5f56;padding:26px">`+
+			`<h2>This link has expired</h2><p style="color:#a9a4c9">Join links last a few minutes. `+
+			`Ask for a fresh QR code and scan it again.</p></body>`)
+		return
+	}
+
+	page, nonce, err := h.kitPage(inv, fmt.Sprintf("https://%s", r.Host))
+	if err != nil {
+		http.Error(w, "guest client unavailable", http.StatusInternalServerError)
+		return
+	}
+	h.app.logf("NET", "guest/"+remote, "served the join page for %q over HTTPS", inv.Label)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	// Replaces the deny-everything policy that guestGate set for API replies.
+	w.Header().Set("Content-Security-Policy", guestPageCSP(nonce))
+	_, _ = w.Write([]byte(page))
 }
 
 func (h *GuestHub) stopServer() {
 	h.srvMu.Lock()
 	srv, running := h.srv, h.running
+	tlsSrv, plainSrv := h.tlsSrv, h.plainSrv
 	h.srv, h.ln, h.running = nil, nil, false
+	h.tlsSrv, h.tlsLn, h.tlsPort, h.cert = nil, nil, 0, nil
+	h.plainSrv, h.plainLn = nil, nil
 	h.srvMu.Unlock()
+	if tlsSrv != nil {
+		_ = tlsSrv.Close()
+	}
+	if plainSrv != nil {
+		_ = plainSrv.Close()
+	}
 	if !running || srv == nil {
 		return
 	}
@@ -687,17 +934,17 @@ func defaultKitsDir() string {
 // rather than loaded from a sibling JSON file, because a page opened from
 // file:// is not allowed to fetch its own directory.
 type kitConfig struct {
-	V         int      `json:"v"`
-	ID        string   `json:"id"`
-	Token     string   `json:"token"`
-	Hosts     []string `json:"hosts"`
-	Port      int      `json:"port"`
-	HostNick  string   `json:"host_nick"`
-	Safety    string   `json:"safety"`
-	Label      string `json:"label"`
-	AllowPlain bool   `json:"allow_plain"`
-	Created    string `json:"created"`
-	Expires    string `json:"expires"`
+	V          int      `json:"v"`
+	ID         string   `json:"id"`
+	Token      string   `json:"token"`
+	Hosts      []string `json:"hosts"`
+	Port       int      `json:"port"`
+	HostNick   string   `json:"host_nick"`
+	Safety     string   `json:"safety"`
+	Label      string   `json:"label"`
+	AllowPlain bool     `json:"allow_plain"`
+	Created    string   `json:"created"`
+	Expires    string   `json:"expires"`
 }
 
 // Create mints an invite and writes the guest folder.
@@ -759,12 +1006,65 @@ func (h *GuestHub) Create(label, folder string, allowPlain bool) (*Invite, error
 	return in, nil
 }
 
-func (h *GuestHub) writeKit(in *Invite, dir string) error {
+// kitPage renders the guest client with one invite's details inlined.
+//
+// origin selects how the page will reach us. Empty means a kit folder opened
+// from the filesystem, which probes the plain HTTP gateway across every local
+// address. A non-empty origin means the page was served over HTTPS and should
+// talk straight back to where it came from.
+func (h *GuestHub) kitPage(in *Invite, origin string) (string, string, error) {
 	tpl, err := guestKitFS.ReadFile("guestkit.html")
 	if err != nil {
-		return fmt.Errorf("guest client template missing: %w", err)
+		return "", "", fmt.Errorf("guest client template missing: %w", err)
 	}
 
+	cfg := h.kitConfigFor(in)
+	if origin != "" {
+		cfg.Hosts = []string{origin}
+	}
+	blob, err := json.Marshal(cfg)
+	if err != nil {
+		return "", "", err
+	}
+
+	// The page's style and script are inline, so a served copy needs a nonce to
+	// satisfy its Content-Security-Policy. A kit opened from the filesystem has
+	// no policy applied and simply ignores the attribute.
+	nonce := randHex(12)
+	page := strings.Replace(string(tpl), `"__LANRUNNER_CONNECT__"`, string(blob), 1)
+	page = strings.ReplaceAll(page, "__LANRUNNER_NONCE__", nonce)
+	return page, nonce, nil
+}
+
+// guestPageCSP is the policy for the served HTML client, as opposed to the
+// deny-everything policy the JSON endpoints use. It still forbids every
+// external resource; it only permits this page's own inline style and script,
+// by nonce, and connections back to the origin that served it.
+func guestPageCSP(nonce string) string {
+	return "default-src 'none'; " +
+		"script-src 'nonce-" + nonce + "'; " +
+		"style-src 'nonce-" + nonce + "'; " +
+		"connect-src 'self'; " +
+		"img-src 'none'; " +
+		"base-uri 'none'; " +
+		"form-action 'none'; " +
+		"frame-ancestors 'none'"
+}
+
+func (h *GuestHub) writeKit(in *Invite, dir string) error {
+	page, _, err := h.kitPage(in, "")
+	if err != nil {
+		return err
+	}
+	cfg := h.kitConfigFor(in)
+
+	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte(page), 0o644); err != nil {
+		return err
+	}
+	return h.writeKitDocs(in, dir, cfg)
+}
+
+func (h *GuestHub) kitConfigFor(in *Invite) kitConfig {
 	cfg := kitConfig{
 		V:          guestProtoVersion,
 		ID:         in.ID,
@@ -783,16 +1083,10 @@ func (h *GuestHub) writeKit(in *Invite, dir string) error {
 	}
 	// json.Marshal escapes <, > and & as \u00xx, so a hostile display name
 	// cannot break out of the <script> block it lands in.
-	blob, err := json.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-	page := strings.Replace(string(tpl), `"__LANRUNNER_CONNECT__"`, string(blob), 1)
+	return cfg
+}
 
-	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte(page), 0o644); err != nil {
-		return err
-	}
-
+func (h *GuestHub) writeKitDocs(in *Invite, dir string, cfg kitConfig) error {
 	readme := strings.Join([]string{
 		"LANRUNNER GUEST KIT",
 		"",
@@ -808,6 +1102,12 @@ func (h *GuestHub) writeKit(in *Invite, dir string) error {
 		"     same switch) as the person who sent it to you.",
 		"  3. Double-click index.html. It opens in your browser.",
 		"  4. Type a name when asked, then start typing messages.",
+		"",
+		"ON A PHONE OR TABLET, USE THE QR CODE INSTEAD",
+		"",
+		"  This folder is for computers. Phones will not run it: iOS previews a",
+		"  downloaded HTML file rather than opening it as a page, so nothing in",
+		"  it can run. Ask the sender for the QR code and scan that instead.",
 		"",
 		"There is nothing to install. The page talks straight to the other",
 		"computer over the local network. No traffic goes to the internet and",
@@ -1101,6 +1401,19 @@ func (h *GuestHub) handleRoot(w http.ResponseWriter, r *http.Request) {
 func (h *GuestHub) handlePing(w http.ResponseWriter, r *http.Request) {
 	if !h.guestGate(w, r) {
 		return
+	}
+	// The page reports what its browser can do. Without this a phone that
+	// silently lacks Web Crypto looks identical to one that cannot reach us at
+	// all, and the operator has no way to tell the two apart.
+	q := r.URL.Query()
+	if sc := q.Get("sc"); sc != "" {
+		note := "secure-context=" + sc + " web-crypto=" + q.Get("cs")
+		if q.Get("cs") == "no" {
+			h.app.logf("SEC", "guest/"+guestRemote(r),
+				"a guest browser reports NO WEB CRYPTO (%s) — it cannot open an encrypted session", note)
+		} else {
+			h.app.logf("NET", "guest/"+guestRemote(r), "guest browser probed us — %s", note)
+		}
 	}
 	guestJSON(w, http.StatusOK, map[string]any{"ok": true, "v": guestProtoVersion})
 }
