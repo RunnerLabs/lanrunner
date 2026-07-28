@@ -108,6 +108,75 @@ Two instances on one machine:
 its own `-data` directory and TCP port or it will reuse the same identity key
 and contend for the default messaging port.
 
+## Guest kits — talking to someone who doesn't run Lanrunner
+
+Everything above assumes both ends run Lanrunner. A guest kit is for the person
+who doesn't and isn't going to install anything.
+
+In the diagnostics panel, under **Guest Kits**, name the person and press
+**Generate guest folder**. You get a folder holding one self-contained HTML
+file. Send them the folder; they open `index.html` on the same network and you
+have a conversation. Nothing is installed, nothing is downloaded at run time,
+and no traffic leaves the LAN.
+
+Guest conversations appear as ordinary tabs alongside peers.
+
+### Phones use the QR code instead
+
+The folder works on a computer. It cannot work on a phone, and that is a
+platform rule rather than something the app can route around: iOS has no way to
+open a downloaded HTML file as a real page, because the Files app previews it in
+Quick Look, which sandboxes scripts and blocks the network.
+
+So phones fetch the page from you instead. Expand **QR code for phones** on any
+kit and point a camera at it. It is collapsed by default and costs no space
+until you open it.
+
+The phone will warn that the certificate is not trusted. That is expected on a
+local network — there is no certificate authority on an offline LAN, and getting
+one would mean the internet access this app exists to avoid. Tap through it. The
+session is genuinely encrypted; the warning only says nobody has vouched for the
+name. The certificate fingerprint is shown next to the QR if a guest wants to
+confirm it out of band, exactly like a peer safety number.
+
+TLS is not decoration here. Browsers only expose the Web Crypto API in a secure
+context, so a plain `http://` LAN address could never produce an encrypted phone
+session. The gateway generates a self-signed certificate on first use and keeps
+it, so a guest who accepts it once is not asked again after a restart.
+
+### What a guest can and cannot reach
+
+A guest reaches exactly one conversation — the invite's own. Never the peer
+list, the console, diagnostics, the room, or another invite.
+
+The gateway only exists while a usable invite exists, and closes and releases
+its ports the moment the last one is revoked or expires. If you have never made
+a kit, Lanrunner opens no LAN-facing port at all.
+
+### Treat a kit like a password
+
+The folder contains a 256-bit invite token. Anyone who gets a copy can message
+you as that guest, so send it the way you would send a password, and press
+**Revoke** when the conversation is over — their copy stops working immediately.
+Invites also expire on their own after seven days, so a folder you forget about
+stops being useful without you having to remember it.
+
+The QR carries a short-lived handoff code rather than the token itself, because
+whatever sits in a URL is the weakest part of the exchange. Codes last 30
+minutes and reissuing one never invalidates another.
+
+### Guest options
+
+```
+-guest 47102            LAN port for guest kits (opened only while an invite exists)
+-guest-tls 47103        HTTPS port; phones can only connect over this
+-no-guest               disable guest kits entirely
+-no-guest-tls           no HTTPS gateway (phones will not work)
+-kits <path>            where generated folders are written
+-guest-ttl 168h         how long invites last (0 disables expiry)
+-guest-any-source       accept guests from outside private LAN ranges
+```
+
 ## Security model
 
 **Identity.** On first run each device generates an Ed25519 keypair and an
@@ -133,6 +202,31 @@ that's a `NAME CONFLICT` in the console and a red badge in the buddy list.
 aloud to them; if it matches, hit *Mark verified*. That's the only step that
 upgrades trust-on-first-use into actual authentication, and it's the same model
 Signal uses.
+
+**Guests are authenticated differently, and it's worth being clear about how.**
+A peer proves who it is with a key you can pin and verify. A guest proves only
+that it holds the folder you sent. Possession of the invite token *is* the
+identity, which is why revocation and expiry matter more there.
+
+Guest sessions use P-256 ECDH with the invite token as the HKDF salt, so the key
+exchange is authenticated by that shared secret: someone sitting in the middle of
+the LAN cannot derive the key without the folder, and someone who has the folder
+is the person you invited. Each direction gets its own AES-256-GCM key.
+
+Guest frames carry a counter inside the sealed payload, checked against a
+sliding window. AES-GCM proves a frame is authentic but not that it is *new*, and
+a captured request replayed verbatim would otherwise decrypt perfectly. The
+window rather than a high-water mark, because a browser fires typing and message
+requests concurrently and does not guarantee their order.
+
+A guest picks its own display name, so the operator's panel shows the invite
+label you chose as the identity and the guest's chosen name only as a secondary
+detail. Otherwise a guest could name itself after one of your peers.
+
+The gateway also refuses connections from outside private LAN ranges, backs off
+an address after repeated failed handshakes, rate-limits each session, and
+compares tokens in constant time — including a decoy comparison for unknown
+invite ids, so response timing does not reveal which invites exist.
 
 ## Efficiency
 
@@ -202,7 +296,14 @@ Only long-lived identity and trust settings live in the data directory
 ```
 identity.json      Ed25519 seed + X25519 private key, mode 0600
 known_peers.json   pinned fingerprints, nicknames, verification state
+guests.json        guest invites and their tokens, mode 0600
+guest-cert.pem     self-signed certificate for the HTTPS guest gateway
+guest-key.pem      its private key, mode 0600
 ```
+
+The guest files appear only once you generate a kit. `guests.json` holds live
+invite tokens, so it is as sensitive as `identity.json`. Revoking an invite in
+the UI is the way to retire one.
 
 Chat transcripts are **memory-only**. They are not written to disk, are erased
 when Lan Runner exits, and can be erased during a run with **CLEAR ROOM** or
@@ -236,3 +337,13 @@ new after every launch.
 - **Trust on first use is only as good as the first use.** If an attacker is
   already in place the very first time you see a peer, you'll pin their key.
   Verifying safety numbers out of band is what closes that hole.
+- **A guest kit is a bearer token.** Anyone holding the folder is the guest;
+  there is no second factor and no key to pin. That is the cost of requiring
+  nothing to be installed. Revoke when you're done, and note that the seven-day
+  expiry limits the damage rather than preventing it.
+- **The guest certificate is self-signed, so guests see a warning.** There is no
+  certificate authority on an offline LAN, and getting one would need the
+  internet access this app exists to avoid. Guests are trained to click through
+  a warning, which is not a habit worth encouraging — but the alternative is no
+  encryption on phones at all. The fingerprint is displayed so it can be checked
+  out of band.

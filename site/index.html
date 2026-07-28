@@ -1139,7 +1139,62 @@
             <span>browser interface / loopback only</span>
             <strong>8080</strong>
           </div>
+          <div class="port-row">
+            <span>guest kits / inbound TCP, only while an invite exists</span>
+            <strong>47102</strong>
+          </div>
+          <div class="port-row">
+            <span>guest kits over HTTPS / phones, same condition</span>
+            <strong>47103</strong>
+          </div>
         </div>
+      </section>
+
+      <section class="story" aria-labelledby="guests-title">
+        <div class="eyebrow">Guest kits</div>
+        <h2 id="guests-title">Talk to someone who hasn't installed it.</h2>
+        <p class="lede">
+          Name the person and Lan Runner generates a folder holding one
+          self-contained HTML file. Send it over; they open it in a browser on
+          the same network and you have an encrypted conversation. Nothing is
+          installed on their side, and nothing is downloaded at run time.
+        </p>
+
+        <div class="principles" aria-label="Guest kit properties">
+          <div class="principle">
+            <b>1 file</b>
+            <span>opens in any browser, nothing to install</span>
+          </div>
+          <div class="principle">
+            <b>QR</b>
+            <span>phones scan and join over HTTPS</span>
+          </div>
+          <div class="principle">
+            <b>Revocable</b>
+            <span>cut a guest off instantly, or let it expire</span>
+          </div>
+        </div>
+
+        <p>
+          A guest reaches exactly one conversation. Never your peer list, your
+          console, your diagnostics, or another guest. The gateway only exists
+          while a usable invite does, and releases its ports the moment the last
+          one is revoked or expires — make no kits and Lan Runner opens no
+          LAN-facing port at all.
+        </p>
+        <p>
+          Sessions are sealed with AES-256-GCM under a key agreed per session by
+          P-256 ECDH, with the invite token mixed in, so only someone holding
+          what you sent can derive it. Phones connect over HTTPS because
+          browsers only grant the Web Crypto API to a secure context; the
+          certificate is self-signed, so a phone warns once before you tap
+          through, and its fingerprint is shown for you to confirm out loud.
+        </p>
+        <p>
+          The folder is a bearer token: anyone with a copy can message you as
+          that guest, so send it the way you would send a password. Invites
+          expire on their own after seven days.
+        </p>
       </section>
 
       <section class="guide" aria-labelledby="guide-title">
@@ -1170,6 +1225,11 @@
           <p>
             Allow inbound TCP 47101 on that peer. If nobody appears, confirm
             both devices share the same non-guest Wi-Fi and allow UDP 47100.
+          </p>
+          <h3>Sending a guest kit to a phone?</h3>
+          <p>
+            Use the QR code, not the file. iOS previews a downloaded HTML file
+            instead of running it, so the folder only works on a computer.
           </p>
         </aside>
       </section>
