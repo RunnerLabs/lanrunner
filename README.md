@@ -1,6 +1,6 @@
 # Lanrunner
 
-An AIM-style messenger for a single local network. No internet, no server, no
+An early 2000's messenger for a single local network. No internet, no server, no
 accounts. Devices find each other by UDP broadcast and multicast, then hold
 long-lived TCP sessions encrypted end to end. The UI is plain HTML and
 bare-bones CSS served on loopback.
