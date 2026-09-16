@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#163cff">
+  <meta name="theme-color" content="#203BF5">
   <meta name="description" content="Lan Runner is encrypted local-network messaging with no accounts, central server, or internet requirement.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://runnerlabs.github.io/lanrunner/">
@@ -12,418 +12,337 @@
   <meta property="og:image" content="https://runnerlabs.github.io/lanrunner/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Lan Runner public beta download page in white, blue, and black.">
+  <meta property="og:image:alt" content="Lan Runner public beta download page — blue field, white ink.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Lan Runner — Public Beta">
   <meta name="twitter:description" content="Encrypted local messaging for devices on the same private network.">
   <meta name="twitter:image" content="https://runnerlabs.github.io/lanrunner/og.png">
-  <meta name="twitter:image:alt" content="Lan Runner public beta download page in white, blue, and black.">
+  <meta name="twitter:image:alt" content="Lan Runner public beta download page — blue field, white ink.">
   <link rel="canonical" href="https://runnerlabs.github.io/lanrunner/">
   <title>Lan Runner — Encrypted Local Messaging</title>
   <style>
     :root {
-      color-scheme: light;
-      --blue: #163cff;
-      --blue-dark: #001580;
-      --ink: #080808;
-      --paper: #fbfbf7;
-      --muted: #565656;
-      --line: #0b0b0b;
+      color-scheme: dark;
+      --field: #203BF5;
+      --ink: #FFFFFF;
+      --ink-dim: rgba(255, 255, 255, 0.78);
+      --line: #FFFFFF;
+      --btn-fill: #FFFFFF;
+      --btn-ink: #203BF5;
+      --font: "IBM Plex Sans", "Segoe UI", Arial, Helvetica, sans-serif;
+      --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Courier New", monospace;
+      --display: "Arial Black", Impact, Arial, Helvetica, sans-serif;
+      --max: 1180px;
+      --pad: clamp(16px, 3.5vw, 28px);
     }
 
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
+    * { box-sizing: border-box; }
+    html, body {
       margin: 0;
       min-width: 320px;
       min-height: 100%;
-      background: var(--paper);
+      background: var(--field);
       color: var(--ink);
     }
-
     body {
-      font: 14px/1.35 Arial, Helvetica, sans-serif;
+      font: 15px/1.45 var(--font);
+      -webkit-font-smoothing: antialiased;
     }
-
-    a {
-      color: inherit;
-    }
-
+    a { color: inherit; }
     a:focus-visible,
     button:focus-visible {
       outline: 3px solid var(--ink);
       outline-offset: 3px;
     }
-
-    .top-band {
-      height: 15px;
-      background: linear-gradient(90deg, var(--blue-dark) 0 32%, var(--blue) 32% 100%);
-    }
-
-    .page {
-      width: min(100%, 1600px);
-      min-height: calc(100svh - 15px);
-      margin: 0 auto;
-      padding: clamp(20px, 3vw, 48px) clamp(20px, 4.5vw, 72px) 20px;
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto;
-      gap: clamp(18px, 2.3vh, 30px);
-    }
-
-    .masthead {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 30px;
-      align-items: end;
-    }
-
-    .brand {
-      min-width: 0;
-    }
-
-    .wordmark {
-      margin: 0;
-      max-width: max-content;
-      font-family: "Arial Black", Arial, Helvetica, sans-serif;
-      font-size: clamp(60px, 8vw, 126px);
-      font-style: italic;
+    h1, h2, h3, p, ul { margin: 0; }
+    h1, h2, h3 {
+      font-family: var(--display);
       font-weight: 900;
-      line-height: .8;
-      letter-spacing: -.085em;
-      transform: skewX(-4deg);
-      transform-origin: left bottom;
-    }
-
-    .brand-rules {
-      width: min(720px, 82vw);
-      margin-top: clamp(18px, 2.4vh, 28px);
-    }
-
-    .brand-rules::before,
-    .brand-rules::after {
-      content: "";
-      display: block;
-      height: 6px;
-      background: var(--line);
-    }
-
-    .brand-rules::after {
-      width: 43%;
-      height: 4px;
-      margin-top: 8px;
-    }
-
-    .release-chip {
-      align-self: start;
-      min-width: 190px;
-      border: 2px solid var(--ink);
-      padding: 12px 14px 10px;
-      font: 700 12px/1.25 "Courier New", monospace;
+      letter-spacing: -0.03em;
       text-transform: uppercase;
-      letter-spacing: .08em;
+    }
+    .wrap {
+      width: min(100%, var(--max));
+      margin: 0 auto;
+      padding: 0 var(--pad);
     }
 
-    .release-chip b {
-      display: block;
-      margin-top: 4px;
-      font-size: 17px;
-      letter-spacing: -.02em;
-    }
-
-    .layout {
-      min-height: 0;
-      display: grid;
-      grid-template-columns: minmax(280px, 4fr) minmax(340px, 5fr) minmax(240px, 3fr);
-      gap: clamp(24px, 3vw, 52px);
-      align-items: stretch;
-    }
-
-    .downloads {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      padding-top: clamp(2px, 2vh, 24px);
-    }
-
-    .kicker {
-      margin: 0 0 13px;
-      font: 700 12px/1.2 "Courier New", monospace;
-      text-transform: uppercase;
-      letter-spacing: .12em;
-    }
-
-    .cta-stack {
-      display: grid;
-      gap: 10px;
-    }
-
-    .cta {
-      min-height: 58px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-      padding: 12px 16px;
-      border: 2px solid var(--blue);
-      background: var(--blue);
-      color: #fff;
-      font-weight: 800;
-      text-decoration: none;
-      text-transform: uppercase;
-      letter-spacing: .035em;
-      transition: background-color 120ms ease, color 120ms ease, transform 120ms ease;
-    }
-
-    .cta small {
-      font: 700 11px/1.1 "Courier New", monospace;
-      opacity: .86;
-      text-align: right;
-    }
-
-    .cta:hover {
-      transform: translateX(5px);
-      background: var(--blue-dark);
-      border-color: var(--blue-dark);
-    }
-
-    .cta.windows {
-      min-height: 70px;
-      border-color: var(--ink);
-      box-shadow: 8px 8px 0 var(--ink);
-      margin-bottom: 4px;
-    }
-
-    .utility-links {
+    .nav {
       display: flex;
       flex-wrap: wrap;
-      gap: 9px 17px;
-      margin-top: 21px;
-      font: 700 12px/1.2 "Courier New", monospace;
-      text-transform: uppercase;
-    }
-
-    .utility-links a {
-      text-decoration-thickness: 2px;
-      text-underline-offset: 4px;
-    }
-
-    .utility-links a:hover {
-      color: var(--blue);
-    }
-
-    .preview-trigger {
-      width: 100%;
-      min-height: 46px;
-      margin-top: 17px;
-      padding: 9px 12px;
-      display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 14px;
-      border: 2px solid var(--ink);
+      gap: 14px 24px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-brand {
+      font: 800 12px/1.2 var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+    }
+    .nav-brand span { opacity: 0.8; font-weight: 600; }
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 18px;
+      font: 700 11px/1 var(--mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .nav-links a { text-decoration: none; }
+    .nav-links a:hover { text-decoration: underline; text-underline-offset: 4px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 10px 16px;
+      border: 1px solid var(--line);
+      background: var(--btn-fill);
+      color: var(--btn-ink);
+      font: 800 11px/1 var(--mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .btn:hover { filter: brightness(0.95); }
+    .btn-ghost {
       background: transparent;
       color: var(--ink);
-      cursor: pointer;
-      font: 800 11px/1.15 "Courier New", monospace;
-      text-align: left;
-      text-transform: uppercase;
-      letter-spacing: .06em;
     }
+    .btn-ghost:hover { background: rgba(255,255,255,0.08); filter: none; }
+    .btn-wide { width: 100%; }
 
-    .preview-trigger::after {
-      content: "03 / OPEN";
-      flex: 0 0 auto;
-      padding: 5px 7px 4px;
-      background: var(--blue);
-      color: #fff;
-      font-size: 9px;
-      letter-spacing: .04em;
+    .hero {
+      margin: 22px 0 28px;
+      border: 1px solid var(--line);
+      padding: 14px;
     }
-
-    .preview-trigger:hover {
-      border-color: var(--blue);
-      color: var(--blue);
-    }
-
-    .story {
-      position: relative;
-      border-left: 7px solid var(--ink);
-      padding: 0 clamp(22px, 2.6vw, 44px) 0 clamp(22px, 2.6vw, 42px);
-    }
-
-    .story::after {
-      content: "";
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      width: 7px;
-      height: 46%;
-      background: var(--ink);
-    }
-
-    .eyebrow {
+    .hero-bar {
       display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 15px;
-      color: var(--blue);
-      font: 700 12px/1.2 "Courier New", monospace;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px 16px;
+      margin-bottom: 14px;
+      font: 700 11px/1.2 var(--mono);
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      letter-spacing: .1em;
     }
-
-    .eyebrow::before {
+    .hero-bar .live::before {
       content: "";
-      width: 44px;
-      height: 5px;
-      background: var(--blue);
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-right: 8px;
+      background: var(--ink);
+      vertical-align: -1px;
     }
-
-    .story h2 {
-      max-width: 680px;
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: clamp(29px, 3.2vw, 52px);
-      line-height: .97;
-      letter-spacing: -.055em;
-    }
-
-    .lede {
-      max-width: 640px;
-      margin: clamp(18px, 2.4vh, 28px) 0 0;
-      font-size: clamp(14px, 1.15vw, 17px);
-      line-height: 1.45;
-    }
-
-    .principles {
+    .hero-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      margin-top: clamp(22px, 3vh, 36px);
-      border-top: 3px solid var(--ink);
-      border-bottom: 3px solid var(--ink);
+      grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+      gap: 18px 28px;
+      align-items: stretch;
     }
-
-    .principle {
-      min-width: 0;
-      padding: 12px 12px 11px 0;
-    }
-
-    .principle + .principle {
-      border-left: 1px solid var(--ink);
-      padding-left: 12px;
-    }
-
-    .principle b {
-      display: block;
-      font-size: 15px;
-      line-height: 1.1;
-    }
-
-    .principle span {
-      display: block;
-      margin-top: 4px;
-      color: var(--muted);
-      font: 11px/1.25 "Courier New", monospace;
-    }
-
-    .network {
-      margin-top: clamp(20px, 2.8vh, 34px);
-    }
-
-    .network h3,
-    .guide h2 {
-      margin: 0 0 10px;
-      font-size: 12px;
+    .hero-square {
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 16px;
+      font: 900 clamp(18px, 2.4vw, 28px)/1.05 var(--display);
+      letter-spacing: -0.04em;
       text-transform: uppercase;
-      letter-spacing: .08em;
     }
-
-    .port-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 16px;
-      padding: 9px 0 7px;
-      border-top: 1px solid var(--ink);
-      font: 12px/1.2 "Courier New", monospace;
+    .hero-copy h1 {
+      font-size: clamp(28px, 5.2vw, 52px);
+      line-height: 0.95;
+      max-width: 14ch;
     }
-
-    .port-row strong {
-      color: var(--blue);
+    .hero-copy p {
+      margin-top: 14px;
+      max-width: 46ch;
+      color: var(--ink-dim);
       font-size: 15px;
     }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
 
-    .guide {
+    .features {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+    .feature {
+      border: 1px solid var(--line);
+      padding: 16px 14px 18px;
+      min-height: 148px;
       display: flex;
       flex-direction: column;
-      min-width: 0;
-      padding-top: clamp(2px, 2vh, 24px);
+      gap: 10px;
+    }
+    .feature .num {
+      font: 700 11px/1 var(--mono);
+      letter-spacing: 0.1em;
+      opacity: 0.75;
+    }
+    .feature h3 {
+      font-size: clamp(15px, 1.6vw, 18px);
+      line-height: 1.05;
+    }
+    .feature p {
+      color: var(--ink-dim);
+      font-size: 13px;
+      line-height: 1.4;
+      margin-top: auto;
     }
 
-    .step {
+    .download {
+      border-top: 1px solid var(--line);
+      padding: 28px 0 40px;
+    }
+    .download h2 {
+      font-size: clamp(28px, 5vw, 48px);
+      line-height: 0.95;
+      margin-bottom: 8px;
+    }
+    .download .meta {
+      font: 700 12px/1.4 var(--mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+      margin-bottom: 18px;
+    }
+    .builds {
       display: grid;
-      grid-template-columns: 34px 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
-      padding: 12px 0;
-      border-top: 2px solid var(--ink);
+    }
+    .build {
+      border: 1px solid var(--line);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      text-decoration: none;
+      transition: background 120ms ease;
+    }
+    .build:hover { background: rgba(255,255,255,0.08); }
+    .build strong {
+      font: 900 16px/1.1 var(--display);
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+    .build span {
+      font: 12px/1.35 var(--mono);
+      color: var(--ink-dim);
+    }
+    .build .go {
+      margin-top: auto;
+      font: 800 11px/1 var(--mono);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
     }
 
-    .step-no {
-      color: var(--blue);
-      font: 900 22px/1 "Arial Black", Arial, sans-serif;
+    .extras {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      margin-top: 16px;
+      font: 700 11px/1.2 var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
+    .extras a { text-underline-offset: 3px; }
 
+    .guide {
+      border-top: 1px solid var(--line);
+      padding: 28px 0 36px;
+    }
+    .guide h2 {
+      font-size: clamp(22px, 3.5vw, 34px);
+      margin-bottom: 16px;
+    }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .step {
+      border: 1px solid var(--line);
+      padding: 14px;
+    }
+    .step .num {
+      font: 900 22px/1 var(--display);
+      margin-bottom: 8px;
+    }
     .step b {
       display: block;
       font-size: 14px;
-    }
-
-    .step p {
-      margin: 3px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-    }
-
-    .trouble {
-      margin-top: auto;
-      padding: 14px;
-      background: var(--blue);
-      color: #fff;
-    }
-
-    .trouble h3 {
-      margin: 0 0 7px;
-      font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: .08em;
+      letter-spacing: 0.02em;
     }
-
+    .step p {
+      margin-top: 6px;
+      color: var(--ink-dim);
+      font-size: 13px;
+    }
+    .trouble {
+      border: 1px solid var(--line);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .trouble h3 {
+      font-size: 13px;
+      letter-spacing: 0.06em;
+    }
     .trouble p {
-      margin: 0;
-      font: 11px/1.35 "Courier New", monospace;
+      margin-top: 6px;
+      color: var(--ink-dim);
+      font: 12px/1.4 var(--mono);
     }
 
-    .footer {
+    .ports {
+      border-top: 1px solid var(--line);
+      padding: 24px 0 32px;
+    }
+    .ports h2 {
+      font-size: clamp(18px, 2.8vw, 26px);
+      margin-bottom: 12px;
+    }
+    .port-row {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 24px;
-      align-items: center;
-      padding-top: 12px;
-      border-top: 5px solid var(--ink);
-      font: 11px/1.25 "Courier New", monospace;
+      gap: 12px;
+      padding: 10px 0;
+      border-top: 1px solid rgba(255,255,255,0.45);
+      font: 12px/1.3 var(--mono);
     }
+    .port-row strong { font-size: 14px; }
 
-    .footer strong {
-      color: var(--blue);
+    .footer {
+      border-top: 1px solid var(--line);
+      padding: 18px 0 28px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px 20px;
+      font: 11px/1.35 var(--mono);
+      color: var(--ink-dim);
     }
-
-    .footer a {
-      font-weight: 700;
-      text-underline-offset: 3px;
-    }
+    .footer strong { color: var(--ink); }
 
     body.preview-locked {
       position: fixed;
@@ -431,11 +350,7 @@
       width: 100%;
       overflow: hidden;
     }
-
-    .preview-shell[hidden] {
-      display: none;
-    }
-
+    .preview-shell[hidden] { display: none; }
     .preview-shell {
       position: fixed;
       inset: 0;
@@ -443,20 +358,18 @@
       display: grid;
       place-items: center;
       padding: 18px;
-      background: rgba(0, 21, 128, .88);
+      background: rgba(0, 21, 128, 0.88);
     }
-
     .preview-dialog {
       width: min(1400px, calc(100vw - 36px));
       height: min(820px, calc(100dvh - 36px));
       min-height: 0;
       display: grid;
       grid-template-rows: auto minmax(0, 1fr) auto;
-      border: 4px solid var(--ink);
-      background: var(--paper);
-      box-shadow: 14px 14px 0 var(--ink);
+      border: 2px solid var(--ink);
+      background: var(--field);
+      color: var(--ink);
     }
-
     .preview-head,
     .preview-controls {
       display: grid;
@@ -464,132 +377,93 @@
       gap: 18px;
       padding: 12px 15px;
     }
-
     .preview-head {
       grid-template-columns: 1fr auto;
-      border-bottom: 4px solid var(--ink);
+      border-bottom: 1px solid var(--line);
     }
-
     .preview-title {
       margin: 0;
-      font: 900 clamp(18px, 2.2vw, 31px)/1 "Arial Black", Arial, sans-serif;
-      font-style: italic;
-      letter-spacing: -.045em;
+      font: 900 clamp(18px, 2.2vw, 28px)/1 var(--display);
+      letter-spacing: -0.03em;
       text-transform: uppercase;
     }
-
     .preview-title span {
+      display: inline-block;
       margin-left: 10px;
-      color: var(--blue);
-      font: 700 10px/1 "Courier New", monospace;
-      font-style: normal;
-      letter-spacing: .1em;
+      font: 700 10px/1 var(--mono);
+      letter-spacing: 0.1em;
+      opacity: 0.8;
       vertical-align: middle;
     }
-
     .preview-close,
     .preview-nav {
-      min-height: 44px;
-      border: 2px solid var(--ink);
-      background: var(--paper);
+      min-height: 40px;
+      border: 1px solid var(--line);
+      background: transparent;
       color: var(--ink);
       cursor: pointer;
-      font: 800 11px/1 "Courier New", monospace;
+      font: 800 11px/1 var(--mono);
       text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
-
-    .preview-close {
-      min-width: 96px;
-      padding: 9px 14px;
-    }
-
+    .preview-close { min-width: 96px; padding: 9px 14px; }
     .preview-close:hover,
-    .preview-nav:hover {
-      background: var(--blue);
-      border-color: var(--blue);
-      color: #fff;
-    }
-
+    .preview-nav:hover { background: var(--btn-fill); color: var(--btn-ink); }
     .preview-stage {
       min-height: 0;
       overflow: hidden;
-      background:
-        linear-gradient(90deg, transparent 0 49.85%, rgba(8, 8, 8, .08) 49.85% 50.15%, transparent 50.15%),
-        #e9e9e3;
+      background: rgba(0,0,0,0.18);
     }
-
     .preview-slide {
       width: 100%;
       height: 100%;
-      min-height: 0;
       margin: 0;
       padding: clamp(10px, 1.6vw, 22px);
       display: grid;
       grid-template-rows: minmax(0, 1fr) auto;
       gap: 11px;
     }
-
-    .preview-slide[hidden] {
-      display: none;
-    }
-
+    .preview-slide[hidden] { display: none; }
     .preview-slide picture {
       min-height: 0;
       display: grid;
       place-items: center;
       overflow: hidden;
     }
-
     .preview-slide img {
       display: block;
       max-width: 100%;
       max-height: 100%;
       width: auto;
       height: auto;
-      border: 2px solid var(--ink);
+      border: 1px solid var(--line);
       background: #fff;
       object-fit: contain;
     }
-
     .preview-slide figcaption {
       max-width: 1050px;
       margin: 0 auto;
-      color: #292929;
-      font: 12px/1.35 "Courier New", monospace;
+      color: var(--ink-dim);
+      font: 12px/1.35 var(--mono);
       text-align: center;
     }
-
     .preview-slide figcaption strong {
-      color: var(--blue);
+      color: var(--ink);
       text-transform: uppercase;
     }
-
     .preview-controls {
       grid-template-columns: minmax(105px, 1fr) minmax(110px, auto) minmax(105px, 1fr);
-      border-top: 4px solid var(--ink);
-      background: var(--paper);
+      border-top: 1px solid var(--line);
     }
-
-    .preview-nav {
-      padding: 9px 14px;
-    }
-
-    .preview-nav[data-direction="previous"] {
-      justify-self: start;
-    }
-
-    .preview-nav[data-direction="next"] {
-      justify-self: end;
-    }
-
+    .preview-nav { padding: 9px 14px; }
+    .preview-nav[data-direction="previous"] { justify-self: start; }
+    .preview-nav[data-direction="next"] { justify-self: end; }
     .preview-count {
       margin: 0;
-      color: var(--blue);
-      font: 800 12px/1 "Courier New", monospace;
-      letter-spacing: .08em;
+      font: 800 12px/1 var(--mono);
+      letter-spacing: 0.08em;
       text-align: center;
     }
-
     .sr-only {
       position: absolute;
       width: 1px;
@@ -602,638 +476,154 @@
       border: 0;
     }
 
-    @media (min-width: 1000px) and (min-height: 680px) {
-      html,
-      body {
-        height: 100%;
-        overflow: hidden;
-      }
-
-      .page {
-        height: calc(100dvh - 15px);
-      }
-    }
-
-    @media (min-width: 1051px) and (min-height: 680px) and (max-height: 820px) {
-      .page {
-        padding-top: 28px;
-        padding-bottom: 12px;
-        gap: 13px;
-      }
-
-      .wordmark {
-        font-size: min(7.2vw, 98px);
-      }
-
-      .brand-rules {
-        margin-top: 14px;
-      }
-
-      .release-chip {
-        padding: 9px 12px 8px;
-      }
-
-      .downloads,
-      .guide {
-        padding-top: 0;
-      }
-
-      .story {
-        padding-right: 28px;
-        padding-left: 28px;
-      }
-
-      .story h2 {
-        font-size: clamp(29px, 3vw, 45px);
-      }
-
-      .lede {
-        margin-top: 14px;
-      }
-
-      .principles,
-      .network {
-        margin-top: 15px;
-      }
-
-      .port-row {
-        padding-top: 6px;
-        padding-bottom: 5px;
-      }
-
-      .step {
-        padding: 9px 0;
-      }
-
-      .trouble {
-        padding: 12px;
-      }
-
-      .trouble p {
-        font-size: 10px;
-      }
-
-      .footer {
-        padding-top: 8px;
+    @media (max-width: 900px) {
+      .features,
+      .builds,
+      .steps { grid-template-columns: 1fr 1fr; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-square {
+        aspect-ratio: auto;
+        min-height: 120px;
+        max-width: 220px;
       }
     }
-
-    @media (min-width: 1051px) and (max-height: 679px) {
-      html,
-      body {
-        height: 100%;
-        overflow: hidden;
-      }
-
-      .page {
-        height: calc(100dvh - 15px);
-        padding-top: 18px;
-        padding-bottom: 8px;
-        gap: 9px;
-      }
-
-      .wordmark {
-        font-size: min(6.8vw, 82px);
-      }
-
-      .brand-rules {
-        margin-top: 10px;
-      }
-
-      .brand-rules::before {
-        height: 5px;
-      }
-
-      .brand-rules::after {
-        height: 3px;
-        margin-top: 5px;
-      }
-
-      .release-chip {
-        min-width: 170px;
-        padding: 7px 10px 6px;
-      }
-
-      .release-chip b {
-        font-size: 14px;
-      }
-
-      .layout {
-        gap: 28px;
-      }
-
-      .downloads,
-      .guide {
-        padding-top: 0;
-      }
-
-      .cta-stack {
-        gap: 7px;
-      }
-
-      .cta,
-      .cta.windows {
-        min-height: 50px;
-        padding: 9px 13px;
-      }
-
-      .cta.windows {
-        min-height: 58px;
-        box-shadow: 6px 6px 0 var(--ink);
-      }
-
-      .utility-links {
-        margin-top: 14px;
-        gap: 7px 13px;
-        font-size: 10px;
-      }
-
-      .preview-trigger {
-        min-height: 36px;
-        margin-top: 9px;
-        padding-top: 6px;
-        padding-bottom: 6px;
-        font-size: 9px;
-      }
-
-      .preview-trigger::after {
-        padding: 4px 6px 3px;
-        font-size: 8px;
-      }
-
-      .story {
-        border-left-width: 6px;
-        padding-right: 23px;
-        padding-left: 23px;
-      }
-
-      .story h2 {
-        font-size: clamp(29px, 2.9vw, 36px);
-      }
-
-      .eyebrow {
-        margin-bottom: 9px;
-        font-size: 10px;
-      }
-
-      .lede {
-        margin-top: 10px;
-        font-size: 12px;
-      }
-
-      .principles,
-      .network {
-        margin-top: 10px;
-      }
-
-      .principle {
-        padding-top: 7px;
-        padding-bottom: 6px;
-      }
-
-      .principle b {
-        font-size: 12px;
-      }
-
-      .principle span,
-      .network h3 {
-        font-size: 9px;
-      }
-
-      .port-row {
-        padding-top: 4px;
-        padding-bottom: 3px;
-        font-size: 9px;
-      }
-
-      .port-row strong {
-        font-size: 12px;
-      }
-
-      .step {
-        grid-template-columns: 28px 1fr;
-        gap: 8px;
-        padding: 7px 0;
-      }
-
-      .step-no {
-        font-size: 18px;
-      }
-
-      .step b {
-        font-size: 12px;
-      }
-
-      .step p {
-        font-size: 10px;
-      }
-
-      .trouble {
-        padding: 9px 10px;
-      }
-
-      .trouble h3 {
-        margin-bottom: 5px;
-        font-size: 10px;
-      }
-
-      .trouble p {
-        font-size: 8px;
-      }
-
-      .footer {
-        padding-top: 6px;
-        border-top-width: 4px;
-        font-size: 9px;
-      }
-    }
-
-    @media (max-width: 1050px) {
-      .layout {
-        grid-template-columns: minmax(250px, 4fr) minmax(380px, 6fr);
-      }
-
-      .guide {
-        grid-column: 1 / -1;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr) minmax(240px, 1.4fr);
-        gap: 14px;
-        padding-top: 0;
-      }
-
-      .guide h2 {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
-      }
-
-      .step {
-        border-top-width: 3px;
-      }
-
-      .trouble {
-        margin-top: 0;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .top-band {
-        height: 11px;
-      }
-
-      .page {
-        min-height: calc(100svh - 11px);
-        padding: 24px 18px 18px;
-        display: block;
-      }
-
-      .masthead {
-        grid-template-columns: 1fr;
-        gap: 22px;
-      }
-
-      .wordmark {
-        font-size: clamp(53px, 17vw, 76px);
-        letter-spacing: -.09em;
-      }
-
-      .brand-rules {
-        width: 92%;
-        margin-top: 18px;
-      }
-
-      .release-chip {
-        width: max-content;
-        min-width: 0;
-        padding: 8px 11px;
-      }
-
-      .release-chip b {
-        display: inline;
-        margin: 0 0 0 5px;
-        font-size: 13px;
-      }
-
-      .layout {
-        display: flex;
-        flex-direction: column;
-        gap: 34px;
-        margin-top: 34px;
-      }
-
-      .downloads,
-      .guide {
-        display: block;
-        padding-top: 0;
-      }
-
-      .cta:hover {
-        transform: none;
-      }
-
-      .story {
-        border-left-width: 5px;
-        padding: 0 18px;
-      }
-
-      .story::after {
-        display: none;
-      }
-
-      .story h2 {
-        font-size: clamp(34px, 11vw, 50px);
-      }
-
-      .principles {
-        grid-template-columns: 1fr;
-      }
-
-      .principle {
-        padding: 10px 0;
-      }
-
-      .principle + .principle {
-        border-left: 0;
-        border-top: 1px solid var(--ink);
-        padding-left: 0;
-      }
-
-      .guide h2 {
-        position: static;
-        width: auto;
-        height: auto;
-        clip: auto;
-        margin-bottom: 10px;
-      }
-
-      .step {
-        padding: 13px 0;
-      }
-
-      .trouble {
-        margin-top: 14px;
-      }
-
-      .footer {
-        grid-template-columns: 1fr;
-        gap: 8px;
-        margin-top: 34px;
-      }
-
-      .preview-shell {
-        padding: 0;
-      }
-
+    @media (max-width: 560px) {
+      .features,
+      .builds,
+      .steps { grid-template-columns: 1fr; }
+      .preview-shell { padding: 0; }
       .preview-dialog {
         width: 100%;
         height: 100dvh;
         border: 0;
-        box-shadow: none;
-      }
-
-      .preview-head,
-      .preview-controls {
-        padding: 10px;
-        gap: 9px;
-      }
-
-      .preview-head {
-        border-bottom-width: 3px;
-      }
-
-      .preview-title span {
-        display: block;
-        margin: 5px 0 0;
-      }
-
-      .preview-close {
-        min-width: 78px;
-        padding-right: 10px;
-        padding-left: 10px;
-      }
-
-      .preview-stage {
-        overflow: auto;
-        overscroll-behavior: contain;
-      }
-
-      .preview-slide {
-        height: auto;
-        min-height: 100%;
-        padding: 10px;
-        grid-template-rows: auto auto;
-        align-content: center;
-        gap: 18px;
-      }
-
-      .preview-slide picture {
-        overflow: visible;
-      }
-
-      .preview-slide img {
-        max-height: none;
-        width: 100%;
-      }
-
-      .preview-slide figcaption {
-        font-size: 11px;
-      }
-
-      .preview-controls {
-        grid-template-columns: 1fr auto 1fr;
-        border-top-width: 3px;
-      }
-
-      .preview-nav {
-        min-width: 0;
-        padding-right: 10px;
-        padding-left: 10px;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .cta {
-        transition: none;
       }
     }
   </style>
 </head>
 <body>
-  <div class="top-band" aria-hidden="true"></div>
-  <div class="page">
-    <header class="masthead">
-      <div class="brand">
-        <h1 class="wordmark">Lan Runner</h1>
-        <div class="brand-rules" aria-hidden="true"></div>
-      </div>
-      <div class="release-chip">
-        Public release
-        <b>v0.1.7 Beta</b>
-      </div>
+  <div class="wrap" id="page-root">
+    <header class="nav">
+      <a class="nav-brand" href="./">LAN RUNNER <span>v0.1.7 Beta</span></a>
+      <nav class="nav-links" aria-label="Page">
+        <a href="#features">Features</a>
+        <a href="#guide">Guide</a>
+        <a href="#download">Download</a>
+        <a href="https://trunner.net/">Task Runner</a>
+        <a class="btn" href="#download">Download</a>
+      </nav>
     </header>
 
-    <main class="layout">
-      <section class="downloads" aria-labelledby="download-title">
-        <h2 class="kicker" id="download-title">Choose a build</h2>
-        <div class="cta-stack">
-          <a class="cta windows" href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-Setup-0.1.7-beta.exe">
-            <span>Download Windows</span>
-            <small>x64 / x86<br>installer</small>
-          </a>
-          <a class="cta" href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-0.1.7-beta-linux-amd64.tar.gz">
-            <span>Linux x64</span>
-            <small>amd64<br>tar.gz</small>
-          </a>
-          <a class="cta" href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-0.1.7-beta-linux-arm64.tar.gz">
-            <span>Linux ARM64</span>
-            <small>arm64<br>tar.gz</small>
-          </a>
-        </div>
-        <nav class="utility-links" aria-label="Project files">
-          <a href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/SHA256SUMS.txt">Checksums</a>
-          <a href="https://github.com/RunnerLabs/lanrunner">Source</a>
-          <a href="https://github.com/RunnerLabs/lanrunner/releases/tag/v0.1.7-beta">Release notes</a>
-        </nav>
-        <button class="preview-trigger" id="preview-open" type="button" aria-haspopup="dialog" aria-controls="app-preview">
-          See Lanrunner in action
-        </button>
-      </section>
-
-      <section class="story" aria-labelledby="story-title">
-        <div class="eyebrow">Private network / direct connection</div>
-        <h2 id="story-title">Encrypted local messaging. Nothing in the middle.</h2>
-        <p class="lede">
-          Lan Runner finds nearby devices on the same LAN and opens encrypted
-          peer-to-peer chat sessions. Your messages stay on the local network:
-          no account, no central server, and no internet connection required.
-        </p>
-
-        <div class="principles" aria-label="Core properties">
-          <div class="principle">
-            <b>0 accounts</b>
-            <span>local identity created on first run</span>
-          </div>
-          <div class="principle">
-            <b>0 relays</b>
-            <span>devices connect directly over the LAN</span>
-          </div>
-          <div class="principle">
-            <b>AES-256-GCM</b>
-            <span>end-to-end encrypted sessions</span>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-bar">
+        <span>lanrunner --local</span>
+        <span class="live">Windows + Linux Beta</span>
+      </div>
+      <div class="hero-grid">
+        <div class="hero-square" aria-hidden="true">LAN<br>RUNNER</div>
+        <div class="hero-copy">
+          <h1 id="hero-title">Chat local. Private. Nothing in the middle.</h1>
+          <p>
+            Lan Runner finds nearby devices on the same LAN and opens encrypted
+            peer-to-peer chat sessions. No account, no central server, no internet required.
+          </p>
+          <div class="hero-actions">
+            <a class="btn" href="#download">Download Lan Runner</a>
+            <a class="btn btn-ghost" href="https://github.com/RunnerLabs/lanrunner/releases/tag/v0.1.7-beta">Release notes</a>
+            <button class="btn btn-ghost" id="preview-open" type="button" aria-haspopup="dialog" aria-controls="app-preview">See it in action</button>
           </div>
         </div>
+      </div>
+    </section>
 
-        <div class="network">
-          <h3>Private-network ports</h3>
-          <div class="port-row">
-            <span>peer discovery / inbound UDP</span>
-            <strong>47100</strong>
-          </div>
-          <div class="port-row">
-            <span>encrypted messaging / inbound TCP</span>
-            <strong>47101</strong>
-          </div>
-          <div class="port-row">
-            <span>browser interface / loopback only</span>
-            <strong>8080</strong>
-          </div>
-          <div class="port-row">
-            <span>guest kits / inbound TCP, only while an invite exists</span>
-            <strong>47102</strong>
-          </div>
-          <div class="port-row">
-            <span>guest kits over HTTPS / phones, same condition</span>
-            <strong>47103</strong>
-          </div>
-        </div>
-      </section>
+    <section class="features" id="features" aria-label="Features">
+      <article class="feature">
+        <span class="num">01</span>
+        <h3>Nearby devices</h3>
+        <p>Discovery on your Wi‑Fi finds peers on the private network — no accounts in the middle.</p>
+      </article>
+      <article class="feature">
+        <span class="num">02</span>
+        <h3>Encrypted chat</h3>
+        <p>AES-256-GCM sessions over direct LAN links. Messages stay on the network you control.</p>
+      </article>
+      <article class="feature">
+        <span class="num">03</span>
+        <h3>Guest kits</h3>
+        <p>One self-contained HTML file for someone who has not installed Lan Runner yet.</p>
+      </article>
+      <article class="feature">
+        <span class="num">04</span>
+        <h3>Diagnostics</h3>
+        <p>Live counters for discovery, inbound TCP, and session state when a peer times out.</p>
+      </article>
+    </section>
 
-      <section class="story" aria-labelledby="guests-title">
-        <div class="eyebrow">Guest kits</div>
-        <h2 id="guests-title">Talk to someone who hasn't installed it.</h2>
-        <p class="lede">
-          Name the person and Lan Runner generates a folder holding one
-          self-contained HTML file. Send it over; they open it in a browser on
-          the same network and you have an encrypted conversation. Nothing is
-          installed on their side, and nothing is downloaded at run time.
-        </p>
+    <section class="download" id="download" aria-labelledby="download-title">
+      <h2 id="download-title">Download</h2>
+      <p class="meta">Public release · v0.1.7 Beta · Windows + Linux</p>
+      <div class="builds">
+        <a class="build" href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-Setup-0.1.7-beta.exe">
+          <strong>Windows</strong>
+          <span>x64 / x86 installer</span>
+          <span class="go">Get installer →</span>
+        </a>
+        <a class="build" href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-0.1.7-beta-linux-amd64.tar.gz">
+          <strong>Linux x64</strong>
+          <span>amd64 · tar.gz</span>
+          <span class="go">Get build →</span>
+        </a>
+        <a class="build" href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-0.1.7-beta-linux-arm64.tar.gz">
+          <strong>Linux ARM64</strong>
+          <span>arm64 · tar.gz</span>
+          <span class="go">Get build →</span>
+        </a>
+      </div>
+      <nav class="extras" aria-label="Project files">
+        <a href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/SHA256SUMS.txt">Checksums</a>
+        <a href="https://github.com/RunnerLabs/lanrunner">Source</a>
+        <a href="https://github.com/RunnerLabs/lanrunner/releases/tag/v0.1.7-beta">Release notes</a>
+      </nav>
+    </section>
 
-        <div class="principles" aria-label="Guest kit properties">
-          <div class="principle">
-            <b>1 file</b>
-            <span>opens in any browser, nothing to install</span>
-          </div>
-          <div class="principle">
-            <b>QR</b>
-            <span>phones scan and join over HTTPS</span>
-          </div>
-          <div class="principle">
-            <b>Revocable</b>
-            <span>cut a guest off instantly, or let it expire</span>
-          </div>
-        </div>
-
-        <p>
-          A guest reaches exactly one conversation. Never your peer list, your
-          console, your diagnostics, or another guest. The gateway only exists
-          while a usable invite does, and releases its ports the moment the last
-          one is revoked or expires — make no kits and Lan Runner opens no
-          LAN-facing port at all.
-        </p>
-        <p>
-          Sessions are sealed with AES-256-GCM under a key agreed per session by
-          P-256 ECDH, with the invite token mixed in, so only someone holding
-          what you sent can derive it. Phones connect over HTTPS because
-          browsers only grant the Web Crypto API to a secure context; the
-          certificate is self-signed, so a phone warns once before you tap
-          through, and its fingerprint is shown for you to confirm out loud.
-        </p>
-        <p>
-          The folder is a bearer token: anyone with a copy can message you as
-          that guest, so send it the way you would send a password. Invites
-          expire on their own after seven days.
-        </p>
-      </section>
-
-      <section class="guide" aria-labelledby="guide-title">
-        <h2 id="guide-title">Start in three steps</h2>
+    <section class="guide" id="guide" aria-labelledby="guide-title">
+      <h2 id="guide-title">Start in three steps</h2>
+      <div class="steps">
         <div class="step">
-          <span class="step-no">01</span>
-          <div>
-            <b>Install or extract</b>
-            <p>Use the correct build for each device.</p>
-          </div>
+          <div class="num">01</div>
+          <b>Install or extract</b>
+          <p>Use the correct build for each device.</p>
         </div>
         <div class="step">
-          <span class="step-no">02</span>
-          <div>
-            <b>Start Lan Runner</b>
-            <p>The interface opens locally in your browser.</p>
-          </div>
+          <div class="num">02</div>
+          <b>Start Lan Runner</b>
+          <p>The interface opens locally in your browser.</p>
         </div>
         <div class="step">
-          <span class="step-no">03</span>
-          <div>
-            <b>Allow the private network</b>
-            <p>Keep UDP 47100 and TCP 47101 open inbound.</p>
-          </div>
+          <div class="num">03</div>
+          <b>Allow the private network</b>
+          <p>Keep UDP 47100 and TCP 47101 open inbound.</p>
         </div>
-        <aside class="trouble" aria-label="Connection troubleshooting">
+      </div>
+      <aside class="trouble" aria-label="Connection troubleshooting">
+        <div>
           <h3>Peer visible but timing out?</h3>
-          <p>
-            Allow inbound TCP 47101 on that peer. If nobody appears, confirm
-            both devices share the same non-guest Wi-Fi and allow UDP 47100.
-          </p>
+          <p>Allow inbound TCP 47101 on that peer. If nobody appears, confirm both devices share the same non-guest Wi‑Fi and allow UDP 47100.</p>
+        </div>
+        <div>
           <h3>Sending a guest kit to a phone?</h3>
-          <p>
-            Use the QR code, not the file. iOS previews a downloaded HTML file
-            instead of running it, so the folder only works on a computer.
-          </p>
-        </aside>
-      </section>
-    </main>
+          <p>Use the QR code, not the file. iOS previews a downloaded HTML file instead of running it, so the folder only works on a computer.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="ports" aria-labelledby="ports-title">
+      <h2 id="ports-title">Private-network ports</h2>
+      <div class="port-row"><span>peer discovery / inbound UDP</span><strong>47100</strong></div>
+      <div class="port-row"><span>encrypted messaging / inbound TCP</span><strong>47101</strong></div>
+      <div class="port-row"><span>browser interface / loopback only</span><strong>8080</strong></div>
+      <div class="port-row"><span>guest kits / inbound TCP, only while an invite exists</span><strong>47102</strong></div>
+      <div class="port-row"><span>guest kits over HTTPS / phones, same condition</span><strong>47103</strong></div>
+    </section>
 
     <footer class="footer">
       <span><strong>BETA:</strong> test only on networks and devices you control.</span>
@@ -1246,38 +636,35 @@
       <header class="preview-head">
         <h2 class="preview-title" id="preview-title">
           App preview
-          <span>Authentic Lanrunner beta interface</span>
+          <span>Authentic Lan Runner beta interface</span>
         </h2>
         <button class="preview-close" id="preview-close" type="button">Close</button>
       </header>
-
       <div class="preview-stage">
         <figure class="preview-slide" data-preview-slide>
           <picture>
             <source srcset="screenshots/peer-discovery.webp" type="image/webp">
-            <img src="screenshots/peer-discovery.png" width="1592" height="578" alt="Lanrunner Buddy List, empty LAN Room, and Diagnostics panel while waiting for another device.">
+            <img src="screenshots/peer-discovery.png" width="1592" height="578" alt="Lan Runner Buddy List, empty LAN Room, and Diagnostics panel while waiting for another device.">
           </picture>
           <figcaption>
             <strong>Peer discovery.</strong>
             The Buddy List and live Diagnostics show whether another device has answered discovery and what to check when the list is empty.
           </figcaption>
         </figure>
-
         <figure class="preview-slide" data-preview-slide hidden>
           <picture>
             <source srcset="screenshots/encrypted-room.webp" type="image/webp">
-            <img src="screenshots/encrypted-room.png" width="1338" height="578" alt="Lanrunner LAN Room with a neutral encrypted conversation between Demo Desk and Demo Laptop.">
+            <img src="screenshots/encrypted-room.png" width="1338" height="578" alt="Lan Runner LAN Room with a neutral encrypted conversation between Demo Desk and Demo Laptop.">
           </picture>
           <figcaption>
             <strong>Encrypted LAN room.</strong>
             Two real demo peers exchange neutral messages over an encrypted local session; no account or internet connection is involved.
           </figcaption>
         </figure>
-
         <figure class="preview-slide" data-preview-slide hidden>
           <picture>
             <source srcset="screenshots/connection-diagnostics.webp" type="image/webp">
-            <img src="screenshots/connection-diagnostics.png" width="548" height="578" alt="Lanrunner Diagnostics with firewall guidance and live peer and session counters.">
+            <img src="screenshots/connection-diagnostics.png" width="548" height="578" alt="Lan Runner Diagnostics with firewall guidance and live peer and session counters.">
           </picture>
           <figcaption>
             <strong>Connection state.</strong>
@@ -1285,7 +672,6 @@
           </figcaption>
         </figure>
       </div>
-
       <footer class="preview-controls">
         <button class="preview-nav" id="preview-previous" type="button" data-direction="previous" aria-label="Previous screenshot">Previous</button>
         <p class="preview-count" id="preview-count" aria-live="polite">1 / 3</p>
@@ -1299,7 +685,7 @@
     (function () {
       var shell = document.getElementById("app-preview");
       var dialog = shell.querySelector(".preview-dialog");
-      var page = document.querySelector(".page");
+      var page = document.getElementById("page-root");
       var openButton = document.getElementById("preview-open");
       var closeButton = document.getElementById("preview-close");
       var previousButton = document.getElementById("preview-previous");
@@ -1346,46 +732,21 @@
 
       openButton.addEventListener("click", openPreview);
       closeButton.addEventListener("click", closePreview);
-      previousButton.addEventListener("click", function () {
-        showSlide(activeSlide - 1);
-      });
-      nextButton.addEventListener("click", function () {
-        showSlide(activeSlide + 1);
-      });
+      previousButton.addEventListener("click", function () { showSlide(activeSlide - 1); });
+      nextButton.addEventListener("click", function () { showSlide(activeSlide + 1); });
       shell.addEventListener("click", function (event) {
-        if (event.target === shell) {
-          closePreview();
-        }
+        if (event.target === shell) closePreview();
       });
 
       document.addEventListener("keydown", function (event) {
-        if (shell.hidden) {
-          return;
-        }
-
-        if (event.key === "Escape") {
-          event.preventDefault();
-          closePreview();
-          return;
-        }
-
-        if (event.key === "ArrowLeft") {
-          event.preventDefault();
-          showSlide(activeSlide - 1);
-          return;
-        }
-
-        if (event.key === "ArrowRight") {
-          event.preventDefault();
-          showSlide(activeSlide + 1);
-          return;
-        }
-
+        if (shell.hidden) return;
+        if (event.key === "Escape") { event.preventDefault(); closePreview(); return; }
+        if (event.key === "ArrowLeft") { event.preventDefault(); showSlide(activeSlide - 1); return; }
+        if (event.key === "ArrowRight") { event.preventDefault(); showSlide(activeSlide + 1); return; }
         if (event.key === "Tab") {
           var controls = focusableControls();
           var first = controls[0];
           var last = controls[controls.length - 1];
-
           if (event.shiftKey && document.activeElement === first) {
             event.preventDefault();
             last.focus();
@@ -1397,9 +758,7 @@
       });
 
       showSlide(0);
-      dialog.addEventListener("click", function (event) {
-        event.stopPropagation();
-      });
+      dialog.addEventListener("click", function (event) { event.stopPropagation(); });
     }());
   </script>
 </body>
