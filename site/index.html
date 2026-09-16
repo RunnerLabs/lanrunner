@@ -1,765 +1,389 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#203BF5">
-  <meta name="description" content="Lan Runner is encrypted local-network messaging with no accounts, central server, or internet requirement.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://runnerlabs.github.io/lanrunner/">
-  <meta property="og:title" content="Lan Runner — Public Beta">
-  <meta property="og:description" content="Encrypted local messaging. No accounts. No central server. No internet required.">
-  <meta property="og:image" content="https://runnerlabs.github.io/lanrunner/og.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Lan Runner public beta download page — blue field, white ink.">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Lan Runner — Public Beta">
-  <meta name="twitter:description" content="Encrypted local messaging for devices on the same private network.">
-  <meta name="twitter:image" content="https://runnerlabs.github.io/lanrunner/og.png">
-  <meta name="twitter:image:alt" content="Lan Runner public beta download page — blue field, white ink.">
-  <link rel="canonical" href="https://runnerlabs.github.io/lanrunner/">
-  <title>Lan Runner — Encrypted Local Messaging</title>
-  <style>
-    :root {
-      color-scheme: dark;
-      --field: #203BF5;
-      --ink: #FFFFFF;
-      --ink-dim: rgba(255, 255, 255, 0.78);
-      --line: #FFFFFF;
-      --btn-fill: #FFFFFF;
-      --btn-ink: #203BF5;
-      --font: "IBM Plex Sans", "Segoe UI", Arial, Helvetica, sans-serif;
-      --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Courier New", monospace;
-      --display: "Arial Black", Impact, Arial, Helvetica, sans-serif;
-      --max: 1180px;
-      --pad: clamp(16px, 3.5vw, 28px);
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lan Runner — Encrypted Local Messaging</title>
+<meta name="description" content="Lan Runner is encrypted local-network messaging with no accounts, central server, or internet requirement.">
+<meta name="theme-color" content="#203BF5">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://runnerlabs.github.io/lanrunner/">
+<meta property="og:title" content="Lan Runner — Public Beta">
+<meta property="og:description" content="Encrypted local messaging. No accounts. No central server. No internet required.">
+<meta property="og:image" content="https://runnerlabs.github.io/lanrunner/og.png">
+<meta property="og:image:alt" content="Lan Runner public beta — blue field, white ink.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lan Runner — Public Beta">
+<meta name="twitter:description" content="Encrypted local messaging for devices on the same private network.">
+<meta name="twitter:image" content="https://runnerlabs.github.io/lanrunner/og.png">
+<link rel="canonical" href="https://runnerlabs.github.io/lanrunner/">
+<style>
+  :root{
+    --field:#203BF5;
+    --ink:#FFFFFF;
+    --pad:24px;
+    --max:1280px;
+    --font:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+    --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  html{color-scheme:dark;scroll-behavior:smooth;}
+  body{
+    margin:0;min-height:100vh;color:var(--ink);background:var(--field);
+    font-family:var(--font);font-size:16px;line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;text-decoration:none;}
+  h1,h2,h3,p,ul{margin:0;}
+  h1,h2,h3{font-weight:800;letter-spacing:-.02em;text-transform:uppercase;}
+  code{font-family:var(--mono);}
+  ul{padding-left:1.1em;}
+  .skip-link{
+    position:fixed;top:-70px;left:16px;z-index:10;
+    padding:10px 14px;color:var(--field);background:var(--ink);
+    font:700 12px/1 var(--mono);text-transform:uppercase;
+  }
+  .skip-link:focus{top:12px;}
+  :focus-visible{outline:3px solid var(--ink);outline-offset:3px;}
 
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      min-width: 320px;
-      min-height: 100%;
-      background: var(--field);
-      color: var(--ink);
-    }
-    body {
-      font: 15px/1.45 var(--font);
-      -webkit-font-smoothing: antialiased;
-    }
-    a { color: inherit; }
-    a:focus-visible,
-    button:focus-visible {
-      outline: 3px solid var(--ink);
-      outline-offset: 3px;
-    }
-    h1, h2, h3, p, ul { margin: 0; }
-    h1, h2, h3 {
-      font-family: var(--display);
-      font-weight: 900;
-      letter-spacing: -0.03em;
-      text-transform: uppercase;
-    }
-    .wrap {
-      width: min(100%, var(--max));
-      margin: 0 auto;
-      padding: 0 var(--pad);
-    }
+  .nav{
+    max-width:var(--max);margin:0 auto;padding:18px var(--pad);
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+  }
+  .nav-brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+  .nav-brand .name{font-size:15px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;}
+  .nav-brand .ver{font:12px/1 var(--mono);}
+  .nav-links{
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    font:700 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  }
+  .nav-cta{
+    display:inline-block;padding:8px 12px;
+    color:var(--field);background:var(--ink);border:2px solid var(--ink);
+  }
 
-    .nav {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px 24px;
-      padding: 18px 0;
-      border-bottom: 1px solid var(--line);
-    }
-    .nav-brand {
-      font: 800 12px/1.2 var(--mono);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      text-decoration: none;
-    }
-    .nav-brand span { opacity: 0.8; font-weight: 600; }
-    .nav-links {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px 18px;
-      font: 700 11px/1 var(--mono);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-    .nav-links a { text-decoration: none; }
-    .nav-links a:hover { text-decoration: underline; text-underline-offset: 4px; }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 42px;
-      padding: 10px 16px;
-      border: 1px solid var(--line);
-      background: var(--btn-fill);
-      color: var(--btn-ink);
-      font: 800 11px/1 var(--mono);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .btn:hover { filter: brightness(0.95); }
-    .btn-ghost {
-      background: transparent;
-      color: var(--ink);
-    }
-    .btn-ghost:hover { background: rgba(255,255,255,0.08); filter: none; }
-    .btn-wide { width: 100%; }
+  main{
+    max-width:var(--max);margin:0 auto;padding:0 var(--pad) 48px;
+    display:flex;flex-direction:column;gap:28px;
+  }
 
-    .hero {
-      margin: 22px 0 28px;
-      border: 1px solid var(--line);
-      padding: 14px;
-    }
-    .hero-bar {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 8px 16px;
-      margin-bottom: 14px;
-      font: 700 11px/1.2 var(--mono);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .hero-bar .live::before {
-      content: "";
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      margin-right: 8px;
-      background: var(--ink);
-      vertical-align: -1px;
-    }
-    .hero-grid {
-      display: grid;
-      grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
-      gap: 18px 28px;
-      align-items: stretch;
-    }
-    .hero-square {
-      aspect-ratio: 1;
-      border: 1px solid var(--line);
-      display: grid;
-      place-items: center;
-      text-align: center;
-      padding: 16px;
-      font: 900 clamp(18px, 2.4vw, 28px)/1.05 var(--display);
-      letter-spacing: -0.04em;
-      text-transform: uppercase;
-    }
-    .hero-copy h1 {
-      font-size: clamp(28px, 5.2vw, 52px);
-      line-height: 0.95;
-      max-width: 14ch;
-    }
-    .hero-copy p {
-      margin-top: 14px;
-      max-width: 46ch;
-      color: var(--ink-dim);
-      font-size: 15px;
-    }
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 20px;
-    }
+  .hero-card{border:2px solid var(--ink);background:var(--field);}
+  .hero-bar{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    padding:10px 14px;border-bottom:2px solid var(--ink);
+    font:13px/1.3 var(--mono);
+  }
+  .status{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  }
+  .dot{width:8px;height:8px;background:var(--ink);}
+  .hero-body{
+    display:grid;grid-template-columns:minmax(110px,160px) 1fr;
+    gap:20px 28px;padding:22px 18px 24px;
+  }
+  .hero-mark{
+    width:132px;aspect-ratio:1;display:grid;place-items:center;padding:10px;
+    border:2px solid var(--ink);
+    font:800 12px/1.2 var(--mono);letter-spacing:.08em;text-align:center;text-transform:uppercase;
+  }
+  .hero-copy h1{
+    max-width:18ch;margin-bottom:12px;
+    font-size:clamp(1.7rem,3.6vw,2.6rem);line-height:1.05;
+  }
+  .lede{max-width:52ch;margin-bottom:18px;font-size:15px;}
+  .hero-ctas{display:flex;flex-wrap:wrap;gap:10px;}
 
-    .features {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 36px;
-    }
-    .feature {
-      border: 1px solid var(--line);
-      padding: 16px 14px 18px;
-      min-height: 148px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .feature .num {
-      font: 700 11px/1 var(--mono);
-      letter-spacing: 0.1em;
-      opacity: 0.75;
-    }
-    .feature h3 {
-      font-size: clamp(15px, 1.6vw, 18px);
-      line-height: 1.05;
-    }
-    .feature p {
-      color: var(--ink-dim);
-      font-size: 13px;
-      line-height: 1.4;
-      margin-top: auto;
-    }
+  .btn{
+    display:inline-flex;min-height:44px;align-items:center;justify-content:center;
+    padding:10px 14px;border:2px solid var(--ink);border-radius:0;
+    font:700 12px/1.2 var(--mono);letter-spacing:.06em;text-align:center;text-transform:uppercase;
+    cursor:pointer;
+  }
+  button.btn{font:inherit;letter-spacing:.06em;text-transform:uppercase;}
+  .btn-ink{color:var(--field);background:var(--ink);}
+  .btn-outline{color:var(--ink);background:var(--field);}
 
-    .download {
-      border-top: 1px solid var(--line);
-      padding: 28px 0 40px;
-    }
-    .download h2 {
-      font-size: clamp(28px, 5vw, 48px);
-      line-height: 0.95;
-      margin-bottom: 8px;
-    }
-    .download .meta {
-      font: 700 12px/1.4 var(--mono);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--ink-dim);
-      margin-bottom: 18px;
-    }
-    .builds {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-    .build {
-      border: 1px solid var(--line);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      text-decoration: none;
-      transition: background 120ms ease;
-    }
-    .build:hover { background: rgba(255,255,255,0.08); }
-    .build strong {
-      font: 900 16px/1.1 var(--display);
-      letter-spacing: -0.02em;
-      text-transform: uppercase;
-    }
-    .build span {
-      font: 12px/1.35 var(--mono);
-      color: var(--ink-dim);
-    }
-    .build .go {
-      margin-top: auto;
-      font: 800 11px/1 var(--mono);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
+  .features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+  .feature{min-height:120px;padding:14px 12px 16px;border:2px solid var(--ink);background:var(--field);}
+  .feature .label{
+    margin-bottom:12px;
+    font:700 12px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+  }
+  .feature p{font-size:14px;}
 
-    .extras {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px 20px;
-      margin-top: 16px;
-      font: 700 11px/1.2 var(--mono);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .extras a { text-underline-offset: 3px; }
+  .section-title{margin-bottom:6px;font-size:clamp(1.6rem,3vw,2.2rem);}
+  .section-sub{margin-bottom:14px;font:12px/1.45 var(--mono);letter-spacing:.04em;}
+  .download-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .download-card{padding:18px 16px;border:2px solid var(--ink);}
+  .download-card.primary{color:var(--field);background:var(--ink);}
+  .download-card.secondary{color:var(--ink);background:var(--field);}
+  .download-meta{
+    margin-bottom:10px;
+    font:11px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;
+  }
+  .download-card h3{margin-bottom:10px;font-size:1.25rem;}
+  .download-note{max-width:48ch;margin-bottom:14px;font-size:14px;}
+  .download-card.primary .btn{color:var(--ink);background:var(--field);border-color:var(--field);}
+  .build-links{
+    display:flex;flex-wrap:wrap;gap:10px 14px;margin:0 0 14px;
+    font:700 11px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  }
+  .build-links a{text-decoration:underline;text-underline-offset:3px;}
+  .checks{margin:0 0 16px;font-size:14px;}
+  .checks li{margin:0 0 6px;}
+  .text-link{
+    font:700 12px/1.4 var(--mono);letter-spacing:.06em;
+    text-decoration:underline;text-underline-offset:3px;text-transform:uppercase;
+  }
+  .fine{display:block;margin-top:12px;font:10px/1.45 var(--mono);}
 
-    .guide {
-      border-top: 1px solid var(--line);
-      padding: 28px 0 36px;
-    }
-    .guide h2 {
-      font-size: clamp(22px, 3.5vw, 34px);
-      margin-bottom: 16px;
-    }
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .step {
-      border: 1px solid var(--line);
-      padding: 14px;
-    }
-    .step .num {
-      font: 900 22px/1 var(--display);
-      margin-bottom: 8px;
-    }
-    .step b {
-      display: block;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-    }
-    .step p {
-      margin-top: 6px;
-      color: var(--ink-dim);
-      font-size: 13px;
-    }
-    .trouble {
-      border: 1px solid var(--line);
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-    }
-    .trouble h3 {
-      font-size: 13px;
-      letter-spacing: 0.06em;
-    }
-    .trouble p {
-      margin-top: 6px;
-      color: var(--ink-dim);
-      font: 12px/1.4 var(--mono);
-    }
+  .trust{padding:18px 0 4px;border-top:2px solid var(--ink);}
+  .trust h2{max-width:28ch;margin-bottom:8px;font-size:clamp(1.4rem,3vw,2rem);line-height:1.1;}
+  .trust p{max-width:68ch;font-size:15px;}
 
-    .ports {
-      border-top: 1px solid var(--line);
-      padding: 24px 0 32px;
-    }
-    .ports h2 {
-      font-size: clamp(18px, 2.8vw, 26px);
-      margin-bottom: 12px;
-    }
-    .port-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 12px;
-      padding: 10px 0;
-      border-top: 1px solid rgba(255,255,255,0.45);
-      font: 12px/1.3 var(--mono);
-    }
-    .port-row strong { font-size: 14px; }
+  .foot{
+    max-width:var(--max);margin:0 auto;padding:16px var(--pad) 28px;
+    border-top:2px solid var(--ink);
+    font:11px/1.5 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  }
+  .foot a:hover{text-decoration:underline;}
 
-    .footer {
-      border-top: 1px solid var(--line);
-      padding: 18px 0 28px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 10px 20px;
-      font: 11px/1.35 var(--mono);
-      color: var(--ink-dim);
-    }
-    .footer strong { color: var(--ink); }
+  body.preview-locked{
+    position:fixed;top:var(--preview-lock-top,0);width:100%;overflow:hidden;
+  }
+  .preview-shell[hidden]{display:none;}
+  .preview-shell{
+    position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;
+    background:rgba(0,21,128,.88);
+  }
+  .preview-dialog{
+    width:min(1400px,calc(100vw - 36px));height:min(820px,calc(100dvh - 36px));
+    min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;
+    border:2px solid var(--ink);background:var(--field);color:var(--ink);
+  }
+  .preview-head,.preview-controls{display:grid;align-items:center;gap:18px;padding:12px 15px;}
+  .preview-head{grid-template-columns:1fr auto;border-bottom:2px solid var(--ink);}
+  .preview-title{margin:0;font:800 clamp(18px,2.2vw,28px)/1 var(--font);letter-spacing:-.02em;text-transform:uppercase;}
+  .preview-title span{margin-left:10px;font:700 10px/1 var(--mono);letter-spacing:.1em;opacity:.85;vertical-align:middle;}
+  .preview-close,.preview-nav{
+    min-height:40px;border:2px solid var(--ink);background:transparent;color:var(--ink);
+    cursor:pointer;font:800 11px/1 var(--mono);text-transform:uppercase;letter-spacing:.08em;
+  }
+  .preview-close{min-width:96px;padding:9px 14px;}
+  .preview-close:hover,.preview-nav:hover{background:var(--ink);color:var(--field);}
+  .preview-stage{min-height:0;overflow:hidden;background:rgba(0,0,0,.18);}
+  .preview-slide{width:100%;height:100%;margin:0;padding:clamp(10px,1.6vw,22px);display:grid;grid-template-rows:minmax(0,1fr) auto;gap:11px;}
+  .preview-slide[hidden]{display:none;}
+  .preview-slide picture{min-height:0;display:grid;place-items:center;overflow:hidden;}
+  .preview-slide img{display:block;max-width:100%;max-height:100%;border:2px solid var(--ink);background:#fff;object-fit:contain;}
+  .preview-slide figcaption{max-width:1050px;margin:0 auto;font:12px/1.35 var(--mono);text-align:center;opacity:.9;}
+  .preview-slide figcaption strong{text-transform:uppercase;}
+  .preview-controls{grid-template-columns:minmax(105px,1fr) minmax(110px,auto) minmax(105px,1fr);border-top:2px solid var(--ink);}
+  .preview-nav{padding:9px 14px;}
+  .preview-nav[data-direction="previous"]{justify-self:start;}
+  .preview-nav[data-direction="next"]{justify-self:end;}
+  .preview-count{margin:0;font:800 12px/1 var(--mono);letter-spacing:.08em;text-align:center;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
-    body.preview-locked {
-      position: fixed;
-      top: var(--preview-lock-top, 0);
-      width: 100%;
-      overflow: hidden;
-    }
-    .preview-shell[hidden] { display: none; }
-    .preview-shell {
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
-      display: grid;
-      place-items: center;
-      padding: 18px;
-      background: rgba(0, 21, 128, 0.88);
-    }
-    .preview-dialog {
-      width: min(1400px, calc(100vw - 36px));
-      height: min(820px, calc(100dvh - 36px));
-      min-height: 0;
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto;
-      border: 2px solid var(--ink);
-      background: var(--field);
-      color: var(--ink);
-    }
-    .preview-head,
-    .preview-controls {
-      display: grid;
-      align-items: center;
-      gap: 18px;
-      padding: 12px 15px;
-    }
-    .preview-head {
-      grid-template-columns: 1fr auto;
-      border-bottom: 1px solid var(--line);
-    }
-    .preview-title {
-      margin: 0;
-      font: 900 clamp(18px, 2.2vw, 28px)/1 var(--display);
-      letter-spacing: -0.03em;
-      text-transform: uppercase;
-    }
-    .preview-title span {
-      display: inline-block;
-      margin-left: 10px;
-      font: 700 10px/1 var(--mono);
-      letter-spacing: 0.1em;
-      opacity: 0.8;
-      vertical-align: middle;
-    }
-    .preview-close,
-    .preview-nav {
-      min-height: 40px;
-      border: 1px solid var(--line);
-      background: transparent;
-      color: var(--ink);
-      cursor: pointer;
-      font: 800 11px/1 var(--mono);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .preview-close { min-width: 96px; padding: 9px 14px; }
-    .preview-close:hover,
-    .preview-nav:hover { background: var(--btn-fill); color: var(--btn-ink); }
-    .preview-stage {
-      min-height: 0;
-      overflow: hidden;
-      background: rgba(0,0,0,0.18);
-    }
-    .preview-slide {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: clamp(10px, 1.6vw, 22px);
-      display: grid;
-      grid-template-rows: minmax(0, 1fr) auto;
-      gap: 11px;
-    }
-    .preview-slide[hidden] { display: none; }
-    .preview-slide picture {
-      min-height: 0;
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-    }
-    .preview-slide img {
-      display: block;
-      max-width: 100%;
-      max-height: 100%;
-      width: auto;
-      height: auto;
-      border: 1px solid var(--line);
-      background: #fff;
-      object-fit: contain;
-    }
-    .preview-slide figcaption {
-      max-width: 1050px;
-      margin: 0 auto;
-      color: var(--ink-dim);
-      font: 12px/1.35 var(--mono);
-      text-align: center;
-    }
-    .preview-slide figcaption strong {
-      color: var(--ink);
-      text-transform: uppercase;
-    }
-    .preview-controls {
-      grid-template-columns: minmax(105px, 1fr) minmax(110px, auto) minmax(105px, 1fr);
-      border-top: 1px solid var(--line);
-    }
-    .preview-nav { padding: 9px 14px; }
-    .preview-nav[data-direction="previous"] { justify-self: start; }
-    .preview-nav[data-direction="next"] { justify-self: end; }
-    .preview-count {
-      margin: 0;
-      font: 800 12px/1 var(--mono);
-      letter-spacing: 0.08em;
-      text-align: center;
-    }
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
-    @media (max-width: 900px) {
-      .features,
-      .builds,
-      .steps { grid-template-columns: 1fr 1fr; }
-      .hero-grid { grid-template-columns: 1fr; }
-      .hero-square {
-        aspect-ratio: auto;
-        min-height: 120px;
-        max-width: 220px;
-      }
-    }
-    @media (max-width: 560px) {
-      .features,
-      .builds,
-      .steps { grid-template-columns: 1fr; }
-      .preview-shell { padding: 0; }
-      .preview-dialog {
-        width: 100%;
-        height: 100dvh;
-        border: 0;
-      }
-    }
-  </style>
+  @media (max-width:860px){
+    .hero-body{grid-template-columns:1fr;}
+    .features{grid-template-columns:1fr 1fr;}
+    .download-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:560px){
+    .nav{flex-wrap:wrap;}
+    .features{grid-template-columns:1fr;}
+    .hero-ctas{flex-direction:column;}
+    .preview-shell{padding:0;}
+    .preview-dialog{width:100%;height:100dvh;border:0;}
+  }
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+</style>
 </head>
 <body>
-  <div class="wrap" id="page-root">
-    <header class="nav">
-      <a class="nav-brand" href="./">LAN RUNNER <span>v0.1.7 Beta</span></a>
-      <nav class="nav-links" aria-label="Page">
-        <a href="#features">Features</a>
-        <a href="#guide">Guide</a>
-        <a href="#download">Download</a>
-        <a href="https://trunner.net/">Task Runner</a>
-        <a class="btn" href="#download">Download</a>
-      </nav>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="nav-brand">
+    <a class="name" href="./">Lan Runner</a>
+    <span class="ver">v0.1.7 beta · same wifi</span>
+  </div>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="#features">Features</a>
+    <a href="#open">Open</a>
+    <a href="https://trunner.net/">Hub</a>
+    <a href="https://trunner.net/ascii-runner/">ASCII Runner</a>
+    <a class="nav-cta" href="#open">Download</a>
+  </nav>
+</header>
+
+<main id="main">
+  <section class="hero-card" aria-label="Hero">
+    <div class="hero-bar">
+      <code>lanrunner --local</code>
+      <span class="status"><span class="dot" aria-hidden="true"></span>Windows + Linux Beta</span>
+    </div>
+    <div class="hero-body">
+      <div class="hero-mark" aria-hidden="true">LAN<br>Runner</div>
+      <div class="hero-copy">
+        <h1>Chat local. Private. Nothing in the middle.</h1>
+        <p class="lede">Lan Runner finds nearby devices on the same LAN and opens encrypted peer-to-peer chat sessions. No account, no central server, no internet required.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-ink" href="#open">Download Lan Runner</a>
+          <button class="btn btn-outline" id="preview-open" type="button" aria-haspopup="dialog" aria-controls="app-preview">See it in action</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features" aria-label="Features">
+    <article class="feature">
+      <p class="label">01 Nearby devices</p>
+      <p>Discovery on your Wi‑Fi finds peers on the private network — no accounts in the middle.</p>
+    </article>
+    <article class="feature">
+      <p class="label">02 Encrypted chat</p>
+      <p>AES-256-GCM sessions over direct LAN links. Messages stay on the network you control.</p>
+    </article>
+    <article class="feature">
+      <p class="label">03 Guest kits</p>
+      <p>One self-contained HTML file for someone who has not installed Lan Runner yet.</p>
+    </article>
+    <article class="feature">
+      <p class="label">04 Diagnostics</p>
+      <p>Live counters for discovery, inbound TCP, and session state when a peer times out.</p>
+    </article>
+  </section>
+
+  <section id="open" aria-label="Download Lan Runner">
+    <h2 class="section-title">Open</h2>
+    <p class="section-sub">Same Wi‑Fi · Encrypted · No account · No cloud · Public beta</p>
+    <div class="download-grid">
+      <article class="download-card primary">
+        <p class="download-meta">Public release · v0.1.7 Beta</p>
+        <h3>Download Lan Runner</h3>
+        <p class="download-note">Install or extract the build for each device. The interface opens locally in your browser on the private network.</p>
+        <div class="build-links">
+          <a href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-Setup-0.1.7-beta.exe">Windows installer</a>
+          <a href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-0.1.7-beta-linux-amd64.tar.gz">Linux x64</a>
+          <a href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-0.1.7-beta-linux-arm64.tar.gz">Linux ARM64</a>
+        </div>
+        <a class="btn" href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-Setup-0.1.7-beta.exe">Get Windows →</a>
+      </article>
+      <article class="download-card secondary">
+        <p class="download-meta">Private network · Direct</p>
+        <h3>Ports &amp; guest kits</h3>
+        <ul class="checks">
+          <li>UDP 47100 discovery · TCP 47101 messaging</li>
+          <li>Guest kit HTML · QR for phones over HTTPS</li>
+          <li>No telemetry · No cloud dependency</li>
+        </ul>
+        <p class="fine">Allow inbound ports on devices you control. Guest kits are bearer tokens — send them like a password.</p>
+        <a class="text-link" href="https://github.com/RunnerLabs/lanrunner/releases/tag/v0.1.7-beta">Release notes →</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="trust" aria-label="Privacy">
+    <h2>Nothing in the middle. Nothing in the cloud.</h2>
+    <p>Lan Runner has no account system, no central relay, and no internet requirement. Peers connect on your LAN. Guest kits open exactly one conversation — never your peer list, console, or another guest.</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>© 2026 Lan Runner · Runner Labs · <a href="https://trunner.net/ascii-runner/">ASCII Runner</a> · <a href="https://trunner.net/">Hub</a> · <a href="https://github.com/RunnerLabs/lanrunner">Source</a> · Less cloud. More control.</p>
+</footer>
+
+<div class="preview-shell" id="app-preview" hidden>
+  <section class="preview-dialog" role="dialog" aria-modal="true" aria-labelledby="preview-title" aria-describedby="preview-help" tabindex="-1">
+    <header class="preview-head">
+      <h2 class="preview-title" id="preview-title">App preview <span>Authentic Lan Runner beta</span></h2>
+      <button class="preview-close" id="preview-close" type="button">Close</button>
     </header>
-
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-bar">
-        <span>lanrunner --local</span>
-        <span class="live">Windows + Linux Beta</span>
-      </div>
-      <div class="hero-grid">
-        <div class="hero-square" aria-hidden="true">LAN<br>RUNNER</div>
-        <div class="hero-copy">
-          <h1 id="hero-title">Chat local. Private. Nothing in the middle.</h1>
-          <p>
-            Lan Runner finds nearby devices on the same LAN and opens encrypted
-            peer-to-peer chat sessions. No account, no central server, no internet required.
-          </p>
-          <div class="hero-actions">
-            <a class="btn" href="#download">Download Lan Runner</a>
-            <a class="btn btn-ghost" href="https://github.com/RunnerLabs/lanrunner/releases/tag/v0.1.7-beta">Release notes</a>
-            <button class="btn btn-ghost" id="preview-open" type="button" aria-haspopup="dialog" aria-controls="app-preview">See it in action</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="features" id="features" aria-label="Features">
-      <article class="feature">
-        <span class="num">01</span>
-        <h3>Nearby devices</h3>
-        <p>Discovery on your Wi‑Fi finds peers on the private network — no accounts in the middle.</p>
-      </article>
-      <article class="feature">
-        <span class="num">02</span>
-        <h3>Encrypted chat</h3>
-        <p>AES-256-GCM sessions over direct LAN links. Messages stay on the network you control.</p>
-      </article>
-      <article class="feature">
-        <span class="num">03</span>
-        <h3>Guest kits</h3>
-        <p>One self-contained HTML file for someone who has not installed Lan Runner yet.</p>
-      </article>
-      <article class="feature">
-        <span class="num">04</span>
-        <h3>Diagnostics</h3>
-        <p>Live counters for discovery, inbound TCP, and session state when a peer times out.</p>
-      </article>
-    </section>
-
-    <section class="download" id="download" aria-labelledby="download-title">
-      <h2 id="download-title">Download</h2>
-      <p class="meta">Public release · v0.1.7 Beta · Windows + Linux</p>
-      <div class="builds">
-        <a class="build" href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-Setup-0.1.7-beta.exe">
-          <strong>Windows</strong>
-          <span>x64 / x86 installer</span>
-          <span class="go">Get installer →</span>
-        </a>
-        <a class="build" href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-0.1.7-beta-linux-amd64.tar.gz">
-          <strong>Linux x64</strong>
-          <span>amd64 · tar.gz</span>
-          <span class="go">Get build →</span>
-        </a>
-        <a class="build" href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/Lanrunner-0.1.7-beta-linux-arm64.tar.gz">
-          <strong>Linux ARM64</strong>
-          <span>arm64 · tar.gz</span>
-          <span class="go">Get build →</span>
-        </a>
-      </div>
-      <nav class="extras" aria-label="Project files">
-        <a href="https://github.com/RunnerLabs/lanrunner/releases/download/v0.1.7-beta/SHA256SUMS.txt">Checksums</a>
-        <a href="https://github.com/RunnerLabs/lanrunner">Source</a>
-        <a href="https://github.com/RunnerLabs/lanrunner/releases/tag/v0.1.7-beta">Release notes</a>
-      </nav>
-    </section>
-
-    <section class="guide" id="guide" aria-labelledby="guide-title">
-      <h2 id="guide-title">Start in three steps</h2>
-      <div class="steps">
-        <div class="step">
-          <div class="num">01</div>
-          <b>Install or extract</b>
-          <p>Use the correct build for each device.</p>
-        </div>
-        <div class="step">
-          <div class="num">02</div>
-          <b>Start Lan Runner</b>
-          <p>The interface opens locally in your browser.</p>
-        </div>
-        <div class="step">
-          <div class="num">03</div>
-          <b>Allow the private network</b>
-          <p>Keep UDP 47100 and TCP 47101 open inbound.</p>
-        </div>
-      </div>
-      <aside class="trouble" aria-label="Connection troubleshooting">
-        <div>
-          <h3>Peer visible but timing out?</h3>
-          <p>Allow inbound TCP 47101 on that peer. If nobody appears, confirm both devices share the same non-guest Wi‑Fi and allow UDP 47100.</p>
-        </div>
-        <div>
-          <h3>Sending a guest kit to a phone?</h3>
-          <p>Use the QR code, not the file. iOS previews a downloaded HTML file instead of running it, so the folder only works on a computer.</p>
-        </div>
-      </aside>
-    </section>
-
-    <section class="ports" aria-labelledby="ports-title">
-      <h2 id="ports-title">Private-network ports</h2>
-      <div class="port-row"><span>peer discovery / inbound UDP</span><strong>47100</strong></div>
-      <div class="port-row"><span>encrypted messaging / inbound TCP</span><strong>47101</strong></div>
-      <div class="port-row"><span>browser interface / loopback only</span><strong>8080</strong></div>
-      <div class="port-row"><span>guest kits / inbound TCP, only while an invite exists</span><strong>47102</strong></div>
-      <div class="port-row"><span>guest kits over HTTPS / phones, same condition</span><strong>47103</strong></div>
-    </section>
-
-    <footer class="footer">
-      <span><strong>BETA:</strong> test only on networks and devices you control.</span>
-      <span>No telemetry · No cloud dependency · <a href="https://github.com/RunnerLabs/lanrunner">Public source</a></span>
+    <div class="preview-stage">
+      <figure class="preview-slide" data-preview-slide>
+        <picture>
+          <source srcset="screenshots/peer-discovery.webp" type="image/webp">
+          <img src="screenshots/peer-discovery.png" width="1592" height="578" alt="Lan Runner Buddy List and Diagnostics while waiting for another device.">
+        </picture>
+        <figcaption><strong>Peer discovery.</strong> The Buddy List and Diagnostics show whether another device has answered discovery.</figcaption>
+      </figure>
+      <figure class="preview-slide" data-preview-slide hidden>
+        <picture>
+          <source srcset="screenshots/encrypted-room.webp" type="image/webp">
+          <img src="screenshots/encrypted-room.png" width="1338" height="578" alt="Lan Runner LAN Room with a neutral encrypted conversation.">
+        </picture>
+        <figcaption><strong>Encrypted LAN room.</strong> Two demo peers exchange messages over an encrypted local session.</figcaption>
+      </figure>
+      <figure class="preview-slide" data-preview-slide hidden>
+        <picture>
+          <source srcset="screenshots/connection-diagnostics.webp" type="image/webp">
+          <img src="screenshots/connection-diagnostics.png" width="548" height="578" alt="Lan Runner Diagnostics with live counters.">
+        </picture>
+        <figcaption><strong>Connection state.</strong> Live counters separate discovery, inbound TCP, and session state.</figcaption>
+      </figure>
+    </div>
+    <footer class="preview-controls">
+      <button class="preview-nav" id="preview-previous" type="button" data-direction="previous" aria-label="Previous screenshot">Previous</button>
+      <p class="preview-count" id="preview-count" aria-live="polite">1 / 3</p>
+      <button class="preview-nav" id="preview-next" type="button" data-direction="next" aria-label="Next screenshot">Next</button>
     </footer>
-  </div>
+    <p class="sr-only" id="preview-help">Use Previous and Next to change screenshots. Press Escape to close.</p>
+  </section>
+</div>
 
-  <div class="preview-shell" id="app-preview" hidden>
-    <section class="preview-dialog" role="dialog" aria-modal="true" aria-labelledby="preview-title" aria-describedby="preview-help" tabindex="-1">
-      <header class="preview-head">
-        <h2 class="preview-title" id="preview-title">
-          App preview
-          <span>Authentic Lan Runner beta interface</span>
-        </h2>
-        <button class="preview-close" id="preview-close" type="button">Close</button>
-      </header>
-      <div class="preview-stage">
-        <figure class="preview-slide" data-preview-slide>
-          <picture>
-            <source srcset="screenshots/peer-discovery.webp" type="image/webp">
-            <img src="screenshots/peer-discovery.png" width="1592" height="578" alt="Lan Runner Buddy List, empty LAN Room, and Diagnostics panel while waiting for another device.">
-          </picture>
-          <figcaption>
-            <strong>Peer discovery.</strong>
-            The Buddy List and live Diagnostics show whether another device has answered discovery and what to check when the list is empty.
-          </figcaption>
-        </figure>
-        <figure class="preview-slide" data-preview-slide hidden>
-          <picture>
-            <source srcset="screenshots/encrypted-room.webp" type="image/webp">
-            <img src="screenshots/encrypted-room.png" width="1338" height="578" alt="Lan Runner LAN Room with a neutral encrypted conversation between Demo Desk and Demo Laptop.">
-          </picture>
-          <figcaption>
-            <strong>Encrypted LAN room.</strong>
-            Two real demo peers exchange neutral messages over an encrypted local session; no account or internet connection is involved.
-          </figcaption>
-        </figure>
-        <figure class="preview-slide" data-preview-slide hidden>
-          <picture>
-            <source srcset="screenshots/connection-diagnostics.webp" type="image/webp">
-            <img src="screenshots/connection-diagnostics.png" width="548" height="578" alt="Lan Runner Diagnostics with firewall guidance and live peer and session counters.">
-          </picture>
-          <figcaption>
-            <strong>Connection state.</strong>
-            Live counters separate discovery, inbound TCP, and encrypted session state so firewall or guest-network problems are easier to identify.
-          </figcaption>
-        </figure>
-      </div>
-      <footer class="preview-controls">
-        <button class="preview-nav" id="preview-previous" type="button" data-direction="previous" aria-label="Previous screenshot">Previous</button>
-        <p class="preview-count" id="preview-count" aria-live="polite">1 / 3</p>
-        <button class="preview-nav" id="preview-next" type="button" data-direction="next" aria-label="Next screenshot">Next</button>
-      </footer>
-      <p class="sr-only" id="preview-help">Use Previous and Next to change screenshots. Press Escape to close the preview.</p>
-    </section>
-  </div>
-
-  <script>
-    (function () {
-      var shell = document.getElementById("app-preview");
-      var dialog = shell.querySelector(".preview-dialog");
-      var page = document.getElementById("page-root");
-      var openButton = document.getElementById("preview-open");
-      var closeButton = document.getElementById("preview-close");
-      var previousButton = document.getElementById("preview-previous");
-      var nextButton = document.getElementById("preview-next");
-      var count = document.getElementById("preview-count");
-      var slides = Array.prototype.slice.call(shell.querySelectorAll("[data-preview-slide]"));
-      var activeSlide = 0;
-      var returnFocus = null;
-      var lockedScrollY = 0;
-
-      function showSlide(nextIndex) {
-        activeSlide = (nextIndex + slides.length) % slides.length;
-        slides.forEach(function (slide, index) {
-          slide.hidden = index !== activeSlide;
-        });
-        count.textContent = (activeSlide + 1) + " / " + slides.length;
-      }
-
-      function openPreview() {
-        returnFocus = document.activeElement;
-        lockedScrollY = window.scrollY;
-        document.body.style.setProperty("--preview-lock-top", "-" + lockedScrollY + "px");
-        document.body.classList.add("preview-locked");
-        page.setAttribute("inert", "");
-        shell.hidden = false;
-        showSlide(0);
-        closeButton.focus();
-      }
-
-      function closePreview() {
-        shell.hidden = true;
-        page.removeAttribute("inert");
-        document.body.classList.remove("preview-locked");
-        document.body.style.removeProperty("--preview-lock-top");
-        window.scrollTo(0, lockedScrollY);
-        if (returnFocus && typeof returnFocus.focus === "function") {
-          returnFocus.focus();
-        }
-      }
-
-      function focusableControls() {
-        return [closeButton, previousButton, nextButton];
-      }
-
-      openButton.addEventListener("click", openPreview);
-      closeButton.addEventListener("click", closePreview);
-      previousButton.addEventListener("click", function () { showSlide(activeSlide - 1); });
-      nextButton.addEventListener("click", function () { showSlide(activeSlide + 1); });
-      shell.addEventListener("click", function (event) {
-        if (event.target === shell) closePreview();
-      });
-
-      document.addEventListener("keydown", function (event) {
-        if (shell.hidden) return;
-        if (event.key === "Escape") { event.preventDefault(); closePreview(); return; }
-        if (event.key === "ArrowLeft") { event.preventDefault(); showSlide(activeSlide - 1); return; }
-        if (event.key === "ArrowRight") { event.preventDefault(); showSlide(activeSlide + 1); return; }
-        if (event.key === "Tab") {
-          var controls = focusableControls();
-          var first = controls[0];
-          var last = controls[controls.length - 1];
-          if (event.shiftKey && document.activeElement === first) {
-            event.preventDefault();
-            last.focus();
-          } else if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
-          }
-        }
-      });
-
-      showSlide(0);
-      dialog.addEventListener("click", function (event) { event.stopPropagation(); });
-    }());
-  </script>
+<script>
+(function () {
+  var shell = document.getElementById("app-preview");
+  var dialog = shell.querySelector(".preview-dialog");
+  var page = document.getElementById("main");
+  var openButton = document.getElementById("preview-open");
+  var closeButton = document.getElementById("preview-close");
+  var previousButton = document.getElementById("preview-previous");
+  var nextButton = document.getElementById("preview-next");
+  var count = document.getElementById("preview-count");
+  var slides = Array.prototype.slice.call(shell.querySelectorAll("[data-preview-slide]"));
+  var activeSlide = 0;
+  var returnFocus = null;
+  var lockedScrollY = 0;
+  function showSlide(nextIndex) {
+    activeSlide = (nextIndex + slides.length) % slides.length;
+    slides.forEach(function (slide, index) { slide.hidden = index !== activeSlide; });
+    count.textContent = (activeSlide + 1) + " / " + slides.length;
+  }
+  function openPreview() {
+    returnFocus = document.activeElement;
+    lockedScrollY = window.scrollY;
+    document.body.style.setProperty("--preview-lock-top", "-" + lockedScrollY + "px");
+    document.body.classList.add("preview-locked");
+    page.setAttribute("inert", "");
+    shell.hidden = false;
+    showSlide(0);
+    closeButton.focus();
+  }
+  function closePreview() {
+    shell.hidden = true;
+    page.removeAttribute("inert");
+    document.body.classList.remove("preview-locked");
+    document.body.style.removeProperty("--preview-lock-top");
+    window.scrollTo(0, lockedScrollY);
+    if (returnFocus && typeof returnFocus.focus === "function") returnFocus.focus();
+  }
+  openButton.addEventListener("click", openPreview);
+  closeButton.addEventListener("click", closePreview);
+  previousButton.addEventListener("click", function () { showSlide(activeSlide - 1); });
+  nextButton.addEventListener("click", function () { showSlide(activeSlide + 1); });
+  shell.addEventListener("click", function (event) { if (event.target === shell) closePreview(); });
+  document.addEventListener("keydown", function (event) {
+    if (shell.hidden) return;
+    if (event.key === "Escape") { event.preventDefault(); closePreview(); return; }
+    if (event.key === "ArrowLeft") { event.preventDefault(); showSlide(activeSlide - 1); return; }
+    if (event.key === "ArrowRight") { event.preventDefault(); showSlide(activeSlide + 1); return; }
+  });
+  showSlide(0);
+  dialog.addEventListener("click", function (event) { event.stopPropagation(); });
+}());
+</script>
 </body>
 </html>
